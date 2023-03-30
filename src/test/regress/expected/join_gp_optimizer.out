@@ -2797,28 +2797,6 @@ select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.
  3    | 3   
 (3 rows)
 
-explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q;
-                                                     QUERY PLAN                                                     
---------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1324032.71 rows=1 width=16)
-   ->  Nested Loop  (cost=0.00..1324032.71 rows=1 width=16)
-         Join Filter: (((foo_nestloop.a)::bpchar = bar_nestloop.p) AND ((foo_nestloop.b)::bpchar = bar_nestloop.q))
-         ->  Seq Scan on bar_nestloop  (cost=0.00..431.00 rows=1 width=16)
-         ->  Materialize  (cost=0.00..431.00 rows=1 width=16)
-               ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=16)
-                     Hash Key: foo_nestloop.a
-                     ->  Seq Scan on foo_nestloop  (cost=0.00..431.00 rows=1 width=16)
- Optimizer: Pivotal Optimizer (GPORCA)
-(9 rows)
-
-select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q order by foo_nestloop.a;
-  a   |  b   
-------+------
- 1    | 1 
- 2    | 2  
- 3    | 3   
-(3 rows)
-
 drop table foo_nestloop;
 drop table bar_nestloop;
 set optimizer_enable_hashjoin to on;

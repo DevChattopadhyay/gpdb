@@ -1014,8 +1014,6 @@ explain select bar_nestloop.* from bar_nestloop inner join foo_nestloop on bar_n
 select bar_nestloop.* from bar_nestloop inner join foo_nestloop on bar_nestloop.q=foo_nestloop.b order by bar_nestloop.p;
 explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q;
 select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q order by foo_nestloop.a;
-explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q;
-select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q order by foo_nestloop.a;
 drop table foo_nestloop;
 drop table bar_nestloop;
 set optimizer_enable_hashjoin to on;

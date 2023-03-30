@@ -2921,28 +2921,6 @@ select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.
  3    | 3   
 (3 rows)
 
-explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q;
-                                                     QUERY PLAN                                                     
---------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..3414371.10 rows=1756 width=48)
-   ->  Nested Loop  (cost=0.00..3414347.69 rows=585 width=48)
-         Join Filter: (((foo_nestloop.a)::bpchar = bar_nestloop.p) AND ((foo_nestloop.b)::bpchar = bar_nestloop.q))
-         ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..453.00 rows=13967 width=48)
-               Hash Key: foo_nestloop.a
-               ->  Seq Scan on foo_nestloop  (cost=0.00..173.67 rows=13967 width=48)
-         ->  Materialize  (cost=0.00..243.50 rows=13967 width=48)
-               ->  Seq Scan on bar_nestloop  (cost=0.00..173.67 rows=13967 width=48)
- Optimizer: Postgres query optimizer
-(9 rows)
-
-select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p and foo_nestloop.b=bar_nestloop.q order by foo_nestloop.a;
-  a   |  b   
-------+------
- 1    | 1 
- 2    | 2  
- 3    | 3   
-(3 rows)
-
 drop table foo_nestloop;
 drop table bar_nestloop;
 set optimizer_enable_hashjoin to on;
