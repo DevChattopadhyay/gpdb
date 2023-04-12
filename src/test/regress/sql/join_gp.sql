@@ -993,9 +993,8 @@ explain select bar_nestloop.* from bar_nestloop left join foo_nestloop on bar_ne
 select bar_nestloop.* from bar_nestloop left join foo_nestloop on bar_nestloop.p=foo_nestloop.b order by bar_nestloop.p;
 explain select bar_nestloop.* from bar_nestloop left join foo_nestloop on bar_nestloop.p=foo_nestloop.a and bar_nestloop.q=foo_nestloop.b;
 select bar_nestloop.* from bar_nestloop left join foo_nestloop on bar_nestloop.p=foo_nestloop.a and bar_nestloop.q=foo_nestloop.b order by bar_nestloop.p;
--- check motion is added to inner relation when performing a NL Inner Join
+-- check motion is added while performing a NL Inner Join
 -- between relations which are distributed on columns of different data types
--- and the join condition contains the distribution key of outer relation
 explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p;
 select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.p order by foo_nestloop.a;
 explain select foo_nestloop.* from foo_nestloop inner join bar_nestloop on foo_nestloop.a=bar_nestloop.q;
