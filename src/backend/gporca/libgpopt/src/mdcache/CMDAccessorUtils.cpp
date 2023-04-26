@@ -360,6 +360,7 @@ CMDAccessorUtils::FCastExists(CMDAccessor *md_accessor, IMDId *mdid_src,
 	GPOS_CATCH_END;
 }
 
+
 //---------------------------------------------------------------------------
 //	@function:
 //		CUtils::FScalarOpReturnsNullOnNullInput
