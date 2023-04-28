@@ -493,10 +493,6 @@
           </dxl:ProjList>
           <dxl:Filter>
             <dxl:Or>
-              <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
-                <dxl:Ident ColId="0" ColName="a" TypeMdid="0.23.1.0"/>
-                <dxl:ConstValue TypeMdid="0.23.1.0" Value="10"/>
-              </dxl:Comparison>
               <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.91.1.0">
                 <dxl:SubPlan TypeMdid="0.16.1.0" SubPlanType="ScalarSubPlan">
                   <dxl:TestExpr/>
@@ -778,6 +774,10 @@
                   </dxl:Result>
                 </dxl:SubPlan>
                 <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
+              </dxl:Comparison>
+              <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
+                <dxl:Ident ColId="0" ColName="a" TypeMdid="0.23.1.0"/>
+                <dxl:ConstValue TypeMdid="0.23.1.0" Value="10"/>
               </dxl:Comparison>
             </dxl:Or>
           </dxl:Filter>

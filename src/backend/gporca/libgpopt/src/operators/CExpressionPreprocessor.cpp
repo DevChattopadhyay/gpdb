@@ -811,8 +811,15 @@ CExpressionPreprocessor::PexprConvert2In(
 			CAutoRef<CConstraint> apcnst(CConstraint::PcnstrFromScalarExpr(
 				mp, apexprPreCollapse.Value(), &colref_array));
 
-			GPOS_ASSERT(nullptr != apcnst.Value());
-			CExpression *pexprPostCollapse = apcnst->PexprScalar(mp);
+			CExpression *pexprPostCollapse = nullptr;
+			if (nullptr != apcnst.Value())
+			{
+				pexprPostCollapse = apcnst->PexprScalar(mp);
+			}
+			else
+			{
+				pexprPostCollapse = apexprPreCollapse.Value();
+			}
 
 			pexprPostCollapse->AddRef();
 			pdrgpexprRemainder->Append(pexprPostCollapse);
@@ -3358,20 +3365,12 @@ CExpressionPreprocessor::PexprPreprocess(
 	GPOS_CHECK_ABORT;
 	pexprSubqUnnested->Release();
 
-	CExpression *pexprConvert2In = pexprUnnested;
+	// (10.a) ensure predicates are array IN or NOT IN where applicable
+	CExpression *pexprConvert2In = PexprConvert2In(mp, pexprUnnested);
+	GPOS_CHECK_ABORT;
+	pexprUnnested->Release();
 
-	// GPDB_12_MERGE_FIXME: Although we've enabled EopttraceArrayConstraints,
-	// the following conversion is causing problems; and might be very
-	// inefficient! Disable for noe.
-	if (GPOS_FTRACE(EopttraceArrayConstraints) && false)
-	{
-		// (10.5) ensure predicates are array IN or NOT IN where applicable
-		pexprConvert2In = PexprConvert2In(mp, pexprUnnested);
-		GPOS_CHECK_ABORT;
-		pexprUnnested->Release();
-	}
-
-	// (11.a) Left Outer Join Pruning
+    // (11.a) Left Outer Join Pruning
 	CExpression *pexprJoinPruned =
 		CLeftJoinPruningPreprocessor::PexprPreprocess(mp, pexprConvert2In,
 													  pcrsOutputAndOrderCols);

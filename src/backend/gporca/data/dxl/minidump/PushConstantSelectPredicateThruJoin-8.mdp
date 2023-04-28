@@ -440,16 +440,13 @@
                     <dxl:Ident ColId="1" ColName="y" TypeMdid="0.23.1.0"/>
                     <dxl:ConstValue TypeMdid="0.23.1.0" Value="5"/>
                   </dxl:Comparison>
-                  <dxl:Or>
-                    <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
-                      <dxl:Ident ColId="0" ColName="x" TypeMdid="0.23.1.0"/>
+                  <dxl:ArrayComp OperatorName="=" OperatorMdid="0.96.1.0" OperatorType="Any">
+                    <dxl:Ident ColId="0" ColName="x" TypeMdid="0.23.1.0"/>
+                    <dxl:Array ArrayType="0.1007.1.0" ElementType="0.23.1.0" MultiDimensional="false">
                       <dxl:ConstValue TypeMdid="0.23.1.0" Value="0"/>
-                    </dxl:Comparison>
-                    <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
-                      <dxl:Ident ColId="0" ColName="x" TypeMdid="0.23.1.0"/>
                       <dxl:ConstValue TypeMdid="0.23.1.0" Value="10"/>
-                    </dxl:Comparison>
-                  </dxl:Or>
+                    </dxl:Array>
+                  </dxl:ArrayComp>
                 </dxl:And>
               </dxl:Filter>
               <dxl:TableDescriptor Mdid="6.57347.1.0" TableName="t2" LockMode="1">
