@@ -339,6 +339,7 @@ CPhysicalJoin::PedInnerHashedFromOuterHashed(
 		for (ULONG ul = 0; fSuccess && ul < ulSize; ul++)
 		{
 			CExpression *pexpr = (*pdrgpexprHashed)[ul];
+
 			// get matching expression from predicate for the corresponding outer child
 			// to create CDistributionSpecHashed for inner child
 			CExpression *pexprMatching =
