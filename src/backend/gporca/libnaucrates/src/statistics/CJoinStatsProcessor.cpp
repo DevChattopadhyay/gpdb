@@ -575,9 +575,7 @@ CJoinStatsProcessor::DeriveJoinStats(CMemoryPool *mp,
 	IStatistics *join_stats = CJoinStatsProcessor::CalcAllJoinStats(
 		mp, statistics_array, local_expr, exprhdl.Pop());
 
-	if (exprhdl.HasOuterRefs() && 0 < stats_ctxt->Size() &&
-		!(exprhdl.Pop()->Eopid() == COperator::EopLogicalNAryJoin &&
-		  CUtils::FScalarConstTrue(expr_with_outer_refs)))
+	if (exprhdl.HasOuterRefs() && 0 < stats_ctxt->Size())
 	{
 		// derive stats based on outer references
 		IStatistics *stats = DeriveStatsWithOuterRefs(

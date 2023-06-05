@@ -2172,15 +2172,15 @@ CPredicateUtils::SeparateOuterRefs(CMemoryPool *mp, CExpression *pexprScalar,
 	GPOS_ASSERT(nullptr != ppexprLocal);
 	GPOS_ASSERT(nullptr != ppexprOuterRef);
 
-	CColRefSet *pcrsUsed = pexprScalar->DeriveUsedColumns();
-	if (pcrsUsed->IsDisjoint(outer_refs))
-	{
-		// if used columns are disjoint from outer references, return input expression
-		pexprScalar->AddRef();
-		*ppexprLocal = pexprScalar;
-		*ppexprOuterRef = CUtils::PexprScalarConstBool(mp, true /*fval*/);
-		return;
-	}
+	//	CColRefSet *pcrsUsed = pexprScalar->DeriveUsedColumns();
+	//	if (pcrsUsed->IsDisjoint(outer_refs))
+	//	{
+	//		// if used columns are disjoint from outer references, return input expression
+	//		pexprScalar->AddRef();
+	//		*ppexprLocal = pexprScalar;
+	//		*ppexprOuterRef = CUtils::PexprScalarConstBool(mp, true /*fval*/);
+	//		return;
+	//	}
 
 	if (COperator::EopScalarNAryJoinPredList == pexprScalar->Pop()->Eopid())
 	{
@@ -2210,6 +2210,16 @@ CPredicateUtils::SeparateOuterRefs(CMemoryPool *mp, CExpression *pexprScalar,
 		*ppexprOuterRef =
 			GPOS_NEW(mp) CExpression(mp, pexprScalar->Pop(), outerRefChildren);
 
+		return;
+	}
+
+	CColRefSet *pcrsUsed = pexprScalar->DeriveUsedColumns();
+	if (pcrsUsed->IsDisjoint(outer_refs))
+	{
+		// if used columns are disjoint from outer references, return input expression
+		pexprScalar->AddRef();
+		*ppexprLocal = pexprScalar;
+		*ppexprOuterRef = CUtils::PexprScalarConstBool(mp, true /*fval*/);
 		return;
 	}
 
