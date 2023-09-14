@@ -1113,7 +1113,7 @@ CStatisticsUtils::DeriveStatsForDynamicScan(CMemoryPool *mp,
 	IStatistics *left_semi_join_stats = base_table_stats->CalcLSJoinStats(
 		mp, part_selector_stats, join_preds_stats);
 
-	if (GPOS_FTRACE(EopttraceDPEHistogramScaleFactor) &&
+	if (!GPOS_FTRACE(EopttraceDPEHistogramScaleFactor) &&
 		left_semi_join_stats->Rows() == base_table_stats->Rows())
 	{
 		left_semi_join_stats->Release();
