@@ -326,6 +326,20 @@ private:
 									CExpression *pexprScalarCond,
 									CDXLPhysicalProperties *dxl_properties);
 
+    // translate a dynamic table scan static
+    CDXLNode *PdxlnDynamicTableScanStatic(CExpression *pexprDTS,
+                                    CColRefArray *colref_array,
+                                    CDistributionSpecArray *pdrgpdsBaseTables,
+                                    ULONG *pulNonGatherMotions, BOOL *pfDML);
+
+    // translate a dynamic table scan static with a scalar condition
+    CDXLNode *PdxlnDynamicTableScanStatic(CExpression *pexprDTS,
+                                    CColRefArray *colref_array,
+                                    CDistributionSpecArray *pdrgpdsBaseTables,
+                                    CExpression *pexprScalarCond,
+                                    CDXLPhysicalProperties *dxl_properties);
+
+
 	// translate a dynamic bitmap table scan
 	CDXLNode *PdxlnDynamicBitmapTableScan(
 		CExpression *pexprDynamicBitmapTableScan, CColRefArray *colref_array,

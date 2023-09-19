@@ -261,6 +261,8 @@ public:
 		EopPhysicalDynamicForeignScan,
 		EopPhysicalDynamicIndexOnlyScan,
 
+        EopPhysicalDynamicTableScanStatic,
+
 		EopSentinel
 	};
 

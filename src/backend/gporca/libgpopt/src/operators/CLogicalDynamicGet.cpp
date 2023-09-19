@@ -226,6 +226,7 @@ CXformSet *
 CLogicalDynamicGet::PxfsCandidates(CMemoryPool *mp) const
 {
 	CXformSet *xform_set = GPOS_NEW(mp) CXformSet(mp);
+    (void) xform_set->ExchangeSet(CXform::ExfDynamicGet2DynamicTableScanStatic);
 	(void) xform_set->ExchangeSet(CXform::ExfDynamicGet2DynamicTableScan);
 	(void) xform_set->ExchangeSet(
 		CXform::ExfExpandDynamicGetWithForeignPartitions);

@@ -159,6 +159,7 @@
 #include "gpopt/xforms/CXformUnnestTVF.h"
 #include "gpopt/xforms/CXformUpdate2DML.h"
 #include "gpopt/xforms/CXformUtils.h"
+#include "gpopt/xforms/CXformDynamicGet2DynamicTableScanStatic.h"
 
 #endif	// !GPOPT_xforms_H
 

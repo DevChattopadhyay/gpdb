@@ -2079,6 +2079,7 @@ CCostModelGPDB::CostScan(CMemoryPool *,	 // mp
 	COperator::EOperatorId op_id = pop->Eopid();
 	GPOS_ASSERT(COperator::EopPhysicalTableScan == op_id ||
 				COperator::EopPhysicalDynamicTableScan == op_id ||
+                COperator::EopPhysicalDynamicTableScanStatic == op_id ||
 				COperator::EopPhysicalForeignScan == op_id ||
 				COperator::EopPhysicalDynamicForeignScan == op_id);
 
@@ -2100,6 +2101,7 @@ CCostModelGPDB::CostScan(CMemoryPool *,	 // mp
 	{
 		case COperator::EopPhysicalTableScan:
 		case COperator::EopPhysicalDynamicTableScan:
+        case COperator::EopPhysicalDynamicTableScanStatic:
 		case COperator::EopPhysicalForeignScan:
 		case COperator::EopPhysicalDynamicForeignScan:
 			// table scan cost considers only retrieving tuple cost,
@@ -2109,6 +2111,10 @@ CCostModelGPDB::CostScan(CMemoryPool *,	 // mp
 			return CCost(
 				pci->NumRebinds() *
 				(dInitScan + pci->Rows() * dTableWidth * dTableScanCostUnit));
+//		case COperator::EopPhysicalDynamicTableScanStatic:
+//                	return CCost(
+//                        	pci->NumRebinds() *
+//                        	(dInitScan + pci->Rows() * dTableWidth * dTableScanCostUnit) + 200);
 		default:
 			GPOS_ASSERT(!"invalid index scan");
 			return CCost(0);
@@ -2187,6 +2193,7 @@ CCostModelGPDB::Cost(
 		}
 		case COperator::EopPhysicalTableScan:
 		case COperator::EopPhysicalDynamicTableScan:
+        case COperator::EopPhysicalDynamicTableScanStatic:
 		case COperator::EopPhysicalForeignScan:
 		case COperator::EopPhysicalDynamicForeignScan:
 

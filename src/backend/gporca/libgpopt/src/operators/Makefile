@@ -187,7 +187,8 @@ OBJS        = CExpression.o \
               CStrictHashedDistributions.o \
               CWindowPreprocessor.o \
               COrderedAggPreprocessor.o \
-              CLeftJoinPruningPreprocessor.o
+              CLeftJoinPruningPreprocessor.o \
+              CPhysicalDynamicTableScanStatic.o
 
 include $(top_srcdir)/src/backend/common.mk
 
