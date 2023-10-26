@@ -249,9 +249,9 @@ CTranslatorQueryToDXL::QueryToDXLInstance(CMemoryPool *mp,
 		CTranslatorQueryToDXL(context, md_accessor,
 							  nullptr,	// var_colid_mapping,
 							  query,
-							  0,	   // query_level
-							  false,   // is_top_query_dml
-							  nullptr  // query_level_to_cte_map
+							  0,		// query_level
+							  false,	// is_top_query_dml
+							  nullptr	// query_level_to_cte_map
 		);
 }
 
@@ -466,9 +466,12 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-		if (rte->security_barrier || rte->securityQuals)
+		// If there is a security qual, it should be present in a relation and if
+		// present anywhere else then fallback
+		if (rte->security_barrier ||
+			(rte->rtekind != RTE_RELATION && nullptr != rte->securityQuals))
 		{
-			GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
+			//GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
 			// otherwise ORCA most likely pushes potentially leaky filters down
 			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 					   GPOS_WSZ_LIT("views with security_barrier ON"));
@@ -3163,6 +3166,8 @@ CDXLNode *
 CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 {
 	CDXLNode *dxlnode = nullptr;
+	CDXLNode *security_qual_dxlnode = nullptr;
+	CDXLNode *combined_qual_dxl_node = nullptr;
 
 	if (0 == gpdb::ListLength(from_expr->fromlist))
 	{
@@ -3175,6 +3180,7 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 			Node *node = (Node *) gpdb::ListNth(from_expr->fromlist, 0);
 			GPOS_ASSERT(nullptr != node);
 			dxlnode = TranslateFromClauseToDXL(node);
+			security_qual_dxlnode = TranslateSecurityQualToDXL(node);
 		}
 		else
 		{
@@ -3191,6 +3197,8 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 				Node *node = (Node *) lfirst(lc);
 				CDXLNode *child_dxlnode = TranslateFromClauseToDXL(node);
 				dxlnode->AddChild(child_dxlnode);
+				security_qual_dxlnode = TranslateSecurityQualToDXL(node);
+
 			}
 		}
 	}
@@ -3205,11 +3213,35 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 
 	if (1 >= gpdb::ListLength(from_expr->fromlist))
 	{
-		if (nullptr != condition_dxlnode)
+		// If security quals is present along with quals in the from_expr (condition_dxlnode)
+		// then creating a AND dxl node with them as childs.
+		if (nullptr != security_qual_dxlnode && nullptr != condition_dxlnode)
+		{
+			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
+			combined_qual_dxl_node->AddChild(condition_dxlnode);
+		}
+
+		if (nullptr != combined_qual_dxl_node || nullptr != condition_dxlnode ||
+			nullptr != security_qual_dxlnode)
 		{
 			CDXLNode *select_dxlnode = GPOS_NEW(m_mp)
 				CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
-			select_dxlnode->AddChild(condition_dxlnode);
+
+			if (nullptr != combined_qual_dxl_node)
+			{
+				select_dxlnode->AddChild(combined_qual_dxl_node);
+			}
+			else if (nullptr != condition_dxlnode)
+			{
+				select_dxlnode->AddChild(condition_dxlnode);
+			}
+			else
+			{
+				select_dxlnode->AddChild(security_qual_dxlnode);
+			}
+
 			select_dxlnode->AddChild(dxlnode);
 
 			dxlnode = select_dxlnode;
@@ -3223,10 +3255,111 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 			condition_dxlnode = CreateDXLConstValueTrue();
 		}
 
-		dxlnode->AddChild(condition_dxlnode);
+		if(nullptr != security_qual_dxlnode)
+		{
+			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
+			combined_qual_dxl_node->AddChild(condition_dxlnode);
+			dxlnode->AddChild(combined_qual_dxl_node);
+		}
+		else
+		{
+			dxlnode->AddChild(condition_dxlnode);
+		}
 	}
 
 	return dxlnode;
+}
+
+CDXLNode *
+CTranslatorQueryToDXL::TranslateSecurityQualToDXL(Node *node)
+{
+	GPOS_ASSERT(nullptr != node);
+	if (IsA(node, RangeTblRef))
+	{
+		RangeTblRef *range_tbl_ref = (RangeTblRef *) node;
+		ULONG rt_index = range_tbl_ref->rtindex;
+		RangeTblEntry *rte =
+			(RangeTblEntry *) gpdb::ListNth(m_query->rtable, rt_index - 1);
+		GPOS_ASSERT(nullptr != rte);
+
+		// Security Quals will only be present in a RTE_RELATION based on
+		// the check in CheckRangeTable method. If the rtekind is not a
+		// RTE_RELATION return nullptr
+		if (RTE_RELATION == rte->rtekind)
+		{
+			// Since rte->securityQuals is a List, it can have multiple values
+			// Not able to generate a case where multiple security quals are
+			// present in a given RTE_RELATION. Falling back in that case.
+			if (1 < gpdb::ListLength(rte->securityQuals))
+			{
+				GPOS_RAISE(gpdxl::ExmaDXL,
+						   gpdxl::ExmiQuery2DXLUnsupportedFeature,
+						   GPOS_WSZ_LIT("multiple security quals for a RTE"));
+			}
+
+			// If no security quals are present, returning a nullptr else returning
+			// the dxl node for the security qual.
+			if (nullptr == rte->securityQuals)
+			{
+				return nullptr;
+			}
+			else
+			{
+				CDXLNode *security_qual_dxlnode = nullptr;
+				Node *security_qual_node =
+					(Node *) lfirst(list_head(rte->securityQuals));
+				security_qual_dxlnode =
+					TranslateExprToDXL((Expr *) security_qual_node);
+				return security_qual_dxlnode;
+			}
+		}
+		return nullptr;
+	}
+
+	if (IsA(node, JoinExpr))
+	{
+		JoinExpr *join_expr = (JoinExpr *) node;
+		GPOS_ASSERT(nullptr != join_expr);
+
+		CDXLNode *left_child_security_qual_dxlnode =
+			TranslateSecurityQualToDXL(join_expr->larg);
+		CDXLNode *right_child_security_qual_dxlnode =
+			TranslateSecurityQualToDXL(join_expr->rarg);
+
+		if (nullptr != left_child_security_qual_dxlnode &&
+			nullptr != right_child_security_qual_dxlnode)
+		{
+			CDXLNode *security_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+			security_qual_dxl_node->AddChild(left_child_security_qual_dxlnode);
+			security_qual_dxl_node->AddChild(right_child_security_qual_dxlnode);
+			return security_qual_dxl_node;
+		}
+
+		if (nullptr != left_child_security_qual_dxlnode)
+		{
+			return left_child_security_qual_dxlnode;
+		}
+		else if (nullptr != right_child_security_qual_dxlnode)
+		{
+			return right_child_security_qual_dxlnode;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	CHAR *sz = (CHAR *) gpdb::NodeToString(node);
+	CWStringDynamic *str =
+		CDXLUtils::CreateDynamicStringFromCharArray(m_mp, sz);
+
+	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			   str->GetBuffer());
+
+	return nullptr;
 }
 
 //---------------------------------------------------------------------------
@@ -4340,7 +4473,7 @@ CTranslatorQueryToDXL::TranslateTargetListToDXLProject(
 CDXLNode *
 CTranslatorQueryToDXL::CreateDXLProjectNullsForGroupingSets(
 	List *target_list, CDXLNode *child_dxlnode,
-	CBitSet *bitset,  // group by columns
+	CBitSet *bitset,				 // group by columns
 	IntToUlongMap
 		*sort_grouping_col_mapping,	 // mapping of sorting and grouping columns
 	IntToUlongMap *output_attno_to_colid_mapping,  // mapping of output columns

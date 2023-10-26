@@ -421,6 +421,8 @@ private:
 	// true iff this query or one of its ancestors is a DML query
 	BOOL IsDMLQuery();
 
+	CDXLNode *TranslateSecurityQualToDXL(Node *node);
+
 public:
 	CTranslatorQueryToDXL(const CTranslatorQueryToDXL &) = delete;
 
