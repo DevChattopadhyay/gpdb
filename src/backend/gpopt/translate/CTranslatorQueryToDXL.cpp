@@ -469,6 +469,7 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 		// If there is a security qual, it should be present in a relation and if
 		// present anywhere else then fallback
 		if (rte->security_barrier ||
+			(!query->hasRowSecurity && nullptr != rte->securityQuals) ||
 			(rte->rtekind != RTE_RELATION && nullptr != rte->securityQuals))
 		{
 			//GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
@@ -3166,8 +3167,8 @@ CDXLNode *
 CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 {
 	CDXLNode *dxlnode = nullptr;
-	CDXLNode *security_qual_dxlnode = nullptr;
-	CDXLNode *combined_qual_dxl_node = nullptr;
+	//	CDXLNode *security_qual_dxlnode = nullptr;
+	//	CDXLNode *combined_qual_dxl_node = nullptr;
 
 	if (0 == gpdb::ListLength(from_expr->fromlist))
 	{
@@ -3180,7 +3181,11 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 			Node *node = (Node *) gpdb::ListNth(from_expr->fromlist, 0);
 			GPOS_ASSERT(nullptr != node);
 			dxlnode = TranslateFromClauseToDXL(node);
-			security_qual_dxlnode = TranslateSecurityQualToDXL(node);
+
+			//			if(!IsA(node, JoinExpr))
+			//			{
+			//				security_qual_dxlnode = TranslateSecurityQualToDXL(node);
+			//			}
 		}
 		else
 		{
@@ -3192,14 +3197,35 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 				m_mp, GPOS_NEW(m_mp) CDXLLogicalJoin(m_mp, EdxljtInner));
 
 			ListCell *lc = nullptr;
+			//			CDXLNode *child_security_qual_dxl_node = nullptr;
+			//			CDXLNode *combined_security_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+			//				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
 			ForEach(lc, from_expr->fromlist)
 			{
 				Node *node = (Node *) lfirst(lc);
 				CDXLNode *child_dxlnode = TranslateFromClauseToDXL(node);
 				dxlnode->AddChild(child_dxlnode);
-				security_qual_dxlnode = TranslateSecurityQualToDXL(node);
-
+				//				child_security_qual_dxl_node = TranslateSecurityQualToDXL(node);
+				//				if(nullptr != child_security_qual_dxl_node)
+				//				{
+				//					combined_security_qual_dxl_node->AddChild(child_security_qual_dxl_node);
+				//				}
 			}
+
+			//			if(0 == combined_security_qual_dxl_node->Arity())
+			//			{
+			//				combined_security_qual_dxl_node->Release();
+			//			}
+			//			else if (1 == combined_security_qual_dxl_node->Arity())
+			//			{
+			//				security_qual_dxlnode = (*combined_security_qual_dxl_node)[0];
+			//				security_qual_dxlnode->AddRef();
+			//				combined_security_qual_dxl_node->Release();
+			//			}
+			//			else
+			//			{
+			//				security_qual_dxlnode = combined_security_qual_dxl_node;
+			//			}
 		}
 	}
 
@@ -3213,35 +3239,44 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 
 	if (1 >= gpdb::ListLength(from_expr->fromlist))
 	{
-		// If security quals is present along with quals in the from_expr (condition_dxlnode)
-		// then creating a AND dxl node with them as childs.
-		if (nullptr != security_qual_dxlnode && nullptr != condition_dxlnode)
-		{
-			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
-				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
-			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
-			combined_qual_dxl_node->AddChild(condition_dxlnode);
-		}
+		//		// If security quals is present along with quals in the from_expr (condition_dxlnode)
+		//		// then creating a AND dxl node with them as childs.
+		//		if (nullptr != security_qual_dxlnode && nullptr != condition_dxlnode)
+		//		{
+		//			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+		//				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+		//			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
+		//			combined_qual_dxl_node->AddChild(condition_dxlnode);
+		//		}
+		//
+		//		if (nullptr != combined_qual_dxl_node || nullptr != condition_dxlnode ||
+		//			nullptr != security_qual_dxlnode)
+		//		{
+		//			CDXLNode *select_dxlnode = GPOS_NEW(m_mp)
+		//				CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		//
+		//			if (nullptr != combined_qual_dxl_node)
+		//			{
+		//				select_dxlnode->AddChild(combined_qual_dxl_node);
+		//			}
+		//			else if (nullptr != condition_dxlnode)
+		//			{
+		//				select_dxlnode->AddChild(condition_dxlnode);
+		//			}
+		//			else
+		//			{
+		//				select_dxlnode->AddChild(security_qual_dxlnode);
+		//			}
+		//
+		//			select_dxlnode->AddChild(dxlnode);
+		//
+		//			dxlnode = select_dxlnode;
 
-		if (nullptr != combined_qual_dxl_node || nullptr != condition_dxlnode ||
-			nullptr != security_qual_dxlnode)
+		if (nullptr != condition_dxlnode)
 		{
 			CDXLNode *select_dxlnode = GPOS_NEW(m_mp)
 				CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
-
-			if (nullptr != combined_qual_dxl_node)
-			{
-				select_dxlnode->AddChild(combined_qual_dxl_node);
-			}
-			else if (nullptr != condition_dxlnode)
-			{
-				select_dxlnode->AddChild(condition_dxlnode);
-			}
-			else
-			{
-				select_dxlnode->AddChild(security_qual_dxlnode);
-			}
-
+			select_dxlnode->AddChild(condition_dxlnode);
 			select_dxlnode->AddChild(dxlnode);
 
 			dxlnode = select_dxlnode;
@@ -3255,112 +3290,112 @@ CTranslatorQueryToDXL::TranslateFromExprToDXL(FromExpr *from_expr)
 			condition_dxlnode = CreateDXLConstValueTrue();
 		}
 
-		if(nullptr != security_qual_dxlnode)
-		{
-			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
-				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
-			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
-			combined_qual_dxl_node->AddChild(condition_dxlnode);
-			dxlnode->AddChild(combined_qual_dxl_node);
-		}
-		else
-		{
-			dxlnode->AddChild(condition_dxlnode);
-		}
+		//		if (nullptr != security_qual_dxlnode)
+		//		{
+		//			combined_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+		//				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+		//			combined_qual_dxl_node->AddChild(security_qual_dxlnode);
+		//			combined_qual_dxl_node->AddChild(condition_dxlnode);
+		//			dxlnode->AddChild(combined_qual_dxl_node);
+		//		}
+		//		else
+		//		{
+		dxlnode->AddChild(condition_dxlnode);
+		//		}
 	}
 
 	return dxlnode;
 }
 
-CDXLNode *
-CTranslatorQueryToDXL::TranslateSecurityQualToDXL(Node *node)
-{
-	GPOS_ASSERT(nullptr != node);
-	if (IsA(node, RangeTblRef))
-	{
-		RangeTblRef *range_tbl_ref = (RangeTblRef *) node;
-		ULONG rt_index = range_tbl_ref->rtindex;
-		RangeTblEntry *rte =
-			(RangeTblEntry *) gpdb::ListNth(m_query->rtable, rt_index - 1);
-		GPOS_ASSERT(nullptr != rte);
-
-		// Security Quals will only be present in a RTE_RELATION based on
-		// the check in CheckRangeTable method. If the rtekind is not a
-		// RTE_RELATION return nullptr
-		if (RTE_RELATION == rte->rtekind)
-		{
-			// Since rte->securityQuals is a List, it can have multiple values
-			// Not able to generate a case where multiple security quals are
-			// present in a given RTE_RELATION. Falling back in that case.
-			if (1 < gpdb::ListLength(rte->securityQuals))
-			{
-				GPOS_RAISE(gpdxl::ExmaDXL,
-						   gpdxl::ExmiQuery2DXLUnsupportedFeature,
-						   GPOS_WSZ_LIT("multiple security quals for a RTE"));
-			}
-
-			// If no security quals are present, returning a nullptr else returning
-			// the dxl node for the security qual.
-			if (nullptr == rte->securityQuals)
-			{
-				return nullptr;
-			}
-			else
-			{
-				CDXLNode *security_qual_dxlnode = nullptr;
-				Node *security_qual_node =
-					(Node *) lfirst(list_head(rte->securityQuals));
-				security_qual_dxlnode =
-					TranslateExprToDXL((Expr *) security_qual_node);
-				return security_qual_dxlnode;
-			}
-		}
-		return nullptr;
-	}
-
-	if (IsA(node, JoinExpr))
-	{
-		JoinExpr *join_expr = (JoinExpr *) node;
-		GPOS_ASSERT(nullptr != join_expr);
-
-		CDXLNode *left_child_security_qual_dxlnode =
-			TranslateSecurityQualToDXL(join_expr->larg);
-		CDXLNode *right_child_security_qual_dxlnode =
-			TranslateSecurityQualToDXL(join_expr->rarg);
-
-		if (nullptr != left_child_security_qual_dxlnode &&
-			nullptr != right_child_security_qual_dxlnode)
-		{
-			CDXLNode *security_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
-				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
-			security_qual_dxl_node->AddChild(left_child_security_qual_dxlnode);
-			security_qual_dxl_node->AddChild(right_child_security_qual_dxlnode);
-			return security_qual_dxl_node;
-		}
-
-		if (nullptr != left_child_security_qual_dxlnode)
-		{
-			return left_child_security_qual_dxlnode;
-		}
-		else if (nullptr != right_child_security_qual_dxlnode)
-		{
-			return right_child_security_qual_dxlnode;
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	CHAR *sz = (CHAR *) gpdb::NodeToString(node);
-	CWStringDynamic *str =
-		CDXLUtils::CreateDynamicStringFromCharArray(m_mp, sz);
-
-	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
-			   str->GetBuffer());
-
-	return nullptr;
-}
+//CDXLNode *
+//CTranslatorQueryToDXL::TranslateSecurityQualToDXL(Node *node)
+//{
+//	GPOS_ASSERT(nullptr != node);
+//	if (IsA(node, RangeTblRef))
+//	{
+//		RangeTblRef *range_tbl_ref = (RangeTblRef *) node;
+//		ULONG rt_index = range_tbl_ref->rtindex;
+//		RangeTblEntry *rte =
+//			(RangeTblEntry *) gpdb::ListNth(m_query->rtable, rt_index - 1);
+//		GPOS_ASSERT(nullptr != rte);
+//
+//		// Security Quals will only be present in a RTE_RELATION based on
+//		// the check in CheckRangeTable method. If the rtekind is not a
+//		// RTE_RELATION return nullptr
+//		if (RTE_RELATION == rte->rtekind)
+//		{
+//			// Since rte->securityQuals is a List, it can have multiple values
+//			// Not able to generate a case where multiple security quals are
+//			// present in a given RTE_RELATION. Falling back in that case.
+//			if (1 < gpdb::ListLength(rte->securityQuals))
+//			{
+//				GPOS_RAISE(gpdxl::ExmaDXL,
+//						   gpdxl::ExmiQuery2DXLUnsupportedFeature,
+//						   GPOS_WSZ_LIT("multiple security quals for a RTE"));
+//			}
+//
+//			// If no security quals are present, returning a nullptr else returning
+//			// the dxl node for the security qual.
+//			if (nullptr == rte->securityQuals)
+//			{
+//				return nullptr;
+//			}
+//			else
+//			{
+//				CDXLNode *security_qual_dxlnode = nullptr;
+//				Node *security_qual_node =
+//					(Node *) lfirst(list_head(rte->securityQuals));
+//				security_qual_dxlnode =
+//					TranslateExprToDXL((Expr *) security_qual_node);
+//				return security_qual_dxlnode;
+//			}
+//		}
+//		return nullptr;
+//	}
+//
+//	if (IsA(node, JoinExpr))
+//	{
+//		JoinExpr *join_expr = (JoinExpr *) node;
+//		GPOS_ASSERT(nullptr != join_expr);
+//
+//		CDXLNode *left_child_security_qual_dxlnode =
+//			TranslateSecurityQualToDXL(join_expr->larg);
+//		CDXLNode *right_child_security_qual_dxlnode =
+//			TranslateSecurityQualToDXL(join_expr->rarg);
+//
+//		if (nullptr != left_child_security_qual_dxlnode &&
+//			nullptr != right_child_security_qual_dxlnode)
+//		{
+//			CDXLNode *security_qual_dxl_node = GPOS_NEW(m_mp) CDXLNode(
+//				m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+//			security_qual_dxl_node->AddChild(left_child_security_qual_dxlnode);
+//			security_qual_dxl_node->AddChild(right_child_security_qual_dxlnode);
+//			return security_qual_dxl_node;
+//		}
+//
+//		if (nullptr != left_child_security_qual_dxlnode)
+//		{
+//			return left_child_security_qual_dxlnode;
+//		}
+//		else if (nullptr != right_child_security_qual_dxlnode)
+//		{
+//			return right_child_security_qual_dxlnode;
+//		}
+//		else
+//		{
+//			return nullptr;
+//		}
+//	}
+//
+//	CHAR *sz = (CHAR *) gpdb::NodeToString(node);
+//	CWStringDynamic *str =
+//		CDXLUtils::CreateDynamicStringFromCharArray(m_mp, sz);
+//
+//	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+//			   str->GetBuffer());
+//
+//	return nullptr;
+//}
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -3543,7 +3578,36 @@ CTranslatorQueryToDXL::TranslateRTEToDXLLogicalGet(const RangeTblEntry *rte,
 	// make note of the operator classes used in the distribution key
 	NoteDistributionPolicyOpclasses(rte);
 
-	return dxl_node;
+	// Since rte->securityQuals is a List, it can have multiple values
+	// Not able to generate a case where multiple security quals are
+	// present in a given RTE_RELATION. Falling back in that case.
+	if (1 < gpdb::ListLength(rte->securityQuals))
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				   GPOS_WSZ_LIT("multiple security quals for a RTE"));
+	}
+
+	CDXLNode *select_dxlnode = nullptr;
+	if (nullptr != rte->securityQuals)
+	{
+		CDXLNode *security_qual_dxlnode = nullptr;
+		Node *security_qual_node =
+			(Node *) lfirst(list_head(rte->securityQuals));
+		security_qual_dxlnode = TranslateExprToDXL((Expr *) security_qual_node);
+		select_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		select_dxlnode->AddChild(security_qual_dxlnode);
+		select_dxlnode->AddChild(dxl_node);
+	}
+
+	if (nullptr != select_dxlnode)
+	{
+		return select_dxlnode;
+	}
+	else
+	{
+		return dxl_node;
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -4200,6 +4264,47 @@ CTranslatorQueryToDXL::TranslateJoinExprInFromToDXL(JoinExpr *join_expr)
 
 	GPOS_ASSERT(nullptr != left_child_dxlnode &&
 				nullptr != right_child_dxlnode);
+
+	//	CDXLNode *left_child_dxlnode_sq=TranslateSecurityQualToDXL(join_expr->larg);
+	//	CDXLNode *right_child_dxlnode_sq=TranslateSecurityQualToDXL(join_expr->rarg);
+	//
+	//	CDXLNode *select_dxlnode_left=nullptr;
+	//	CDXLNode *select_dxlnode_right=nullptr;
+	//
+	//	if(nullptr != left_child_dxlnode_sq)
+	//	{
+	//		select_dxlnode_left = GPOS_NEW(m_mp)
+	//			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+	//		select_dxlnode_left->AddChild(left_child_dxlnode_sq);
+	//		select_dxlnode_left->AddChild(left_child_dxlnode);
+	//
+	//	}
+	//
+	//
+	//	if(nullptr != right_child_dxlnode_sq)
+	//	{
+	//		select_dxlnode_right = GPOS_NEW(m_mp)
+	//			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+	//		select_dxlnode_right->AddChild(right_child_dxlnode_sq);
+	//		select_dxlnode_right->AddChild(right_child_dxlnode);
+	//
+	//	}
+
+	//	if(nullptr != select_dxlnode_left)
+	//	{
+	//		join_dxlnode->AddChild(select_dxlnode_left);
+	//	}
+	//	else{
+	//		join_dxlnode->AddChild(left_child_dxlnode);
+	//	}
+
+	//	if(nullptr != select_dxlnode_right)
+	//	{
+	//		join_dxlnode->AddChild(select_dxlnode_right);
+	//	}
+	//	else{
+	//		join_dxlnode->AddChild(right_child_dxlnode);
+	//	}
 
 	join_dxlnode->AddChild(left_child_dxlnode);
 	join_dxlnode->AddChild(right_child_dxlnode);

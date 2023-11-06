@@ -209,7 +209,7 @@ private:
 	// construct a group by node for a set of grouping columns
 	CDXLNode *CreateSimpleGroupBy(
 		List *target_list, List *group_clause, CBitSet *bitset, BOOL has_aggs,
-		BOOL has_grouping_sets,	 // is this GB part of a GS query
+		BOOL has_grouping_sets,					// is this GB part of a GS query
 		CDXLNode *child_dxlnode,
 		IntToUlongMap *phmiulSortGrpColsColId,	// mapping sortgroupref -> ColId
 		IntToUlongMap
@@ -421,7 +421,7 @@ private:
 	// true iff this query or one of its ancestors is a DML query
 	BOOL IsDMLQuery();
 
-	CDXLNode *TranslateSecurityQualToDXL(Node *node);
+	//	CDXLNode *TranslateSecurityQualToDXL(Node *node);
 
 public:
 	CTranslatorQueryToDXL(const CTranslatorQueryToDXL &) = delete;
