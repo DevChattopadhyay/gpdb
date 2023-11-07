@@ -466,12 +466,29 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-		if (rte->security_barrier || rte->securityQuals)
+		if (rte->security_barrier)
 		{
-			GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
 			// otherwise ORCA most likely pushes potentially leaky filters down
 			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 					   GPOS_WSZ_LIT("views with security_barrier ON"));
+		}
+		if (!query->hasRowSecurity && nullptr != rte->securityQuals)
+		{
+			GPOS_RAISE(
+				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				GPOS_WSZ_LIT("security quals present without RLS enabled"));
+		}
+		if (rte->rtekind != RTE_RELATION && nullptr != rte->securityQuals)
+		{
+			GPOS_RAISE(
+				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				GPOS_WSZ_LIT("security quals present which is not an RTE"));
+		}
+		if (query->hasSubLinks && query->hasRowSecurity)
+		{
+			GPOS_RAISE(
+				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				GPOS_WSZ_LIT("security quals present containing sublinks"));
 		}
 		if (rte->tablesample)
 		{
@@ -3410,7 +3427,47 @@ CTranslatorQueryToDXL::TranslateRTEToDXLLogicalGet(const RangeTblEntry *rte,
 	// make note of the operator classes used in the distribution key
 	NoteDistributionPolicyOpclasses(rte);
 
-	return dxl_node;
+	// Translating security quals
+	ULONG arity = gpdb::ListLength(rte->securityQuals);
+	CDXLNode *select_dxlnode = nullptr;
+	if (1 == arity)
+	{
+		CDXLNode *security_qual_dxlnode = nullptr;
+		Node *security_qual_node =
+			(Node *) lfirst(list_head(rte->securityQuals));
+		security_qual_dxlnode = TranslateExprToDXL((Expr *) security_qual_node);
+		select_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		select_dxlnode->AddChild(security_qual_dxlnode);
+		select_dxlnode->AddChild(dxl_node);
+	}
+	else if (1 < arity)
+	{
+		CDXLNode *security_qual_and_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+		ListCell *lc = nullptr;
+		ForEach(lc, rte->securityQuals)
+		{
+			CDXLNode *security_qual_arg_dxlnode = nullptr;
+			Node *security_qual_arg_node = (Node *) lfirst(lc);
+			security_qual_arg_dxlnode =
+				TranslateExprToDXL((Expr *) security_qual_arg_node);
+			security_qual_and_dxlnode->AddChild(security_qual_arg_dxlnode);
+		}
+		select_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		select_dxlnode->AddChild(security_qual_and_dxlnode);
+		select_dxlnode->AddChild(dxl_node);
+	}
+
+	if (nullptr != select_dxlnode)
+	{
+		return select_dxlnode;
+	}
+	else
+	{
+		return dxl_node;
+	}
 }
 
 //---------------------------------------------------------------------------
