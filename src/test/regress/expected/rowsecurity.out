@@ -848,7 +848,7 @@ EXPLAIN (COSTS OFF) SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, 
          ->  Seq Scan on t2
                Filter: ((a % 2) = 1)
          ->  Seq Scan on t3
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (6 rows)
 
 -- superuser is allowed to bypass RLS checks
@@ -1409,7 +1409,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM dependent; -- After drop, should be unqualifie
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on dependent
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 -----   RECURSION    ----
@@ -2086,8 +2086,9 @@ EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
 -----------------------------------------------------------------------
  Delete on b1
    ->  Seq Scan on b1
-         Filter: ((a > 0) AND (a = 6) AND ((a % 2) = 0) AND f_leak(b))
-(3 rows)
+         Filter: (((a % 2) = 0) AND (a > 0) AND (a = 6) AND f_leak(b))
+ Optimizer: GPORCA
+(4 rows)
 
 DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
 NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
@@ -2283,7 +2284,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
@@ -2293,23 +2294,26 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 PREPARE plancache_test2 AS WITH q AS MATERIALIZED (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sequence
+   ->  Shared Scan (share slice:id 0:0)
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Seq Scan on z1
+                     Filter: (((a % 2) = 0) AND f_leak(b))
    ->  Nested Loop
-         ->  Broadcast Motion 3:3  (slice2; segments: 3)
-               ->  Shared Scan (share slice:id 2:0)
-                     ->  Seq Scan on z1
-                           Filter: (((a % 2) = 0) AND f_leak(b))
+         Join Filter: true
+         ->  Shared Scan (share slice:id 0:0)
          ->  Materialize
-               ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+               ->  Gather Motion 3:1  (slice2; segments: 3)
+                     ->  Seq Scan on z2
+ Optimizer: GPORCA
+(12 rows)
 
 PREPARE plancache_test3 AS WITH q AS MATERIALIZED (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
@@ -2317,14 +2321,13 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 -----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
+         Join Filter: true
          ->  Broadcast Motion 3:3  (slice2; segments: 3)
                ->  Seq Scan on z1
                      Filter: (((a % 2) = 0) AND f_leak(b))
-         ->  Materialize
-               ->  Shared Scan (share slice:id 1:0)
-                     ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+         ->  Seq Scan on z2
+ Optimizer: GPORCA
+(8 rows)
 
 SET ROLE regress_rls_group1;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2342,7 +2345,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
@@ -2351,36 +2354,38 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sequence
+   ->  Shared Scan (share slice:id 0:0)
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Seq Scan on z1
+                     Filter: (((a % 2) = 0) AND f_leak(b))
    ->  Nested Loop
-         ->  Broadcast Motion 3:3  (slice2; segments: 3)
-               ->  Shared Scan (share slice:id 2:0)
-                     ->  Seq Scan on z1
-                           Filter: (((a % 2) = 0) AND f_leak(b))
+         Join Filter: true
+         ->  Shared Scan (share slice:id 0:0)
          ->  Materialize
-               ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+               ->  Gather Motion 3:1  (slice2; segments: 3)
+                     ->  Seq Scan on z2
+ Optimizer: GPORCA
+(12 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
                         QUERY PLAN                         
 -----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
+         Join Filter: true
          ->  Broadcast Motion 3:3  (slice2; segments: 3)
                ->  Seq Scan on z1
                      Filter: (((a % 2) = 0) AND f_leak(b))
-         ->  Materialize
-               ->  Shared Scan (share slice:id 1:0)
-                     ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+         ->  Seq Scan on z2
+ Optimizer: GPORCA
+(8 rows)
 
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2398,7 +2403,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 1) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
@@ -2407,36 +2412,38 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 1) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sequence
+   ->  Shared Scan (share slice:id 0:0)
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Seq Scan on z1
+                     Filter: (((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Broadcast Motion 3:3  (slice2; segments: 3)
-               ->  Shared Scan (share slice:id 2:0)
-                     ->  Seq Scan on z1
-                           Filter: (((a % 2) = 1) AND f_leak(b))
+         Join Filter: true
+         ->  Shared Scan (share slice:id 0:0)
          ->  Materialize
-               ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+               ->  Gather Motion 3:1  (slice2; segments: 3)
+                     ->  Seq Scan on z2
+ Optimizer: GPORCA
+(12 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
                         QUERY PLAN                         
 -----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
+         Join Filter: true
          ->  Broadcast Motion 3:3  (slice2; segments: 3)
                ->  Seq Scan on z1
                      Filter: (((a % 2) = 1) AND f_leak(b))
-         ->  Materialize
-               ->  Shared Scan (share slice:id 1:0)
-                     ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+         ->  Seq Scan on z2
+ Optimizer: GPORCA
+(8 rows)
 
 SET ROLE regress_rls_group2;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2454,7 +2461,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 1) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
@@ -2463,36 +2470,38 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 1) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sequence
+   ->  Shared Scan (share slice:id 0:0)
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Seq Scan on z1
+                     Filter: (((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Broadcast Motion 3:3  (slice2; segments: 3)
-               ->  Shared Scan (share slice:id 2:0)
-                     ->  Seq Scan on z1
-                           Filter: (((a % 2) = 1) AND f_leak(b))
+         Join Filter: true
+         ->  Shared Scan (share slice:id 0:0)
          ->  Materialize
-               ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+               ->  Gather Motion 3:1  (slice2; segments: 3)
+                     ->  Seq Scan on z2
+ Optimizer: GPORCA
+(12 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
                         QUERY PLAN                         
 -----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
+         Join Filter: true
          ->  Broadcast Motion 3:3  (slice2; segments: 3)
                ->  Seq Scan on z1
                      Filter: (((a % 2) = 1) AND f_leak(b))
-         ->  Materialize
-               ->  Shared Scan (share slice:id 1:0)
-                     ->  Seq Scan on z2
- Optimizer: Postgres query optimizer
-(9 rows)
+         ->  Seq Scan on z2
+ Optimizer: GPORCA
+(8 rows)
 
 --
 -- Views should follow policy for view owner.
@@ -2522,7 +2531,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: f_leak(b)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 -- Query as view/table owner.  Should return all records.
@@ -2546,7 +2555,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: f_leak(b)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 DROP VIEW rls_view;
@@ -2572,7 +2581,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 -- Query as role that is not owner of table but is owner of view.
@@ -2593,7 +2602,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 -- Query as role that is not the owner of the table or view without permissions.
@@ -2620,7 +2629,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on z1
          Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
@@ -2826,7 +2835,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on y2
          Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 --
@@ -2877,8 +2886,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak('abc');
 ---------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on y2
-         Filter: (f_leak('abc'::text) AND (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)))
- Optimizer: Postgres query optimizer
+         Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak('abc'::text))
+ Optimizer: GPORCA
 (4 rows)
 
 CREATE TABLE test_qual_pushdown (
@@ -2905,7 +2914,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE 
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
                      ->  Seq Scan on test_qual_pushdown
                            Filter: f_leak(abc)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (10 rows)
 
 SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
@@ -2928,18 +2937,19 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
-                                       QUERY PLAN                                        
------------------------------------------------------------------------------------------
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Join
          Hash Cond: (y2.b = test_qual_pushdown.abc)
-         ->  Seq Scan on y2
-               Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
+         ->  Redistribute Motion 3:3  (slice2; segments: 3)
+               Hash Key: y2.b
+               ->  Seq Scan on y2
+                     Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
          ->  Hash
-               ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Seq Scan on test_qual_pushdown
- Optimizer: Postgres query optimizer
-(9 rows)
+               ->  Seq Scan on test_qual_pushdown
+ Optimizer: GPORCA
+(10 rows)
 
 DROP TABLE test_qual_pushdown;
 --
@@ -2965,7 +2975,7 @@ EXPLAIN (COSTS OFF) EXECUTE role_inval;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 -- Change to regress_rls_carol
@@ -2977,7 +2987,7 @@ EXPLAIN (COSTS OFF) EXECUTE role_inval;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t1
          Filter: ((a % 4) = 0)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 -- Change back to regress_rls_bob
@@ -2989,7 +2999,7 @@ EXPLAIN (COSTS OFF) EXECUTE role_inval;
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 --
@@ -3032,14 +3042,16 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 
 EXPLAIN (COSTS OFF)
 WITH cte1 AS MATERIALIZED (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-                     QUERY PLAN                      
------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Shared Scan (share slice:id 1:0)
-         ->  Seq Scan on t1
-               Filter: (((a % 2) = 0) AND f_leak(b))
- Optimizer: Postgres query optimizer
-(5 rows)
+   ->  Sequence
+         ->  Shared Scan (share slice:id 1:0)
+               ->  Seq Scan on t1
+                     Filter: (((a % 2) = 0) AND f_leak(b))
+         ->  Shared Scan (share slice:id 1:0)
+ Optimizer: GPORCA
+(7 rows)
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
 ERROR:  new row violates row-level security policy for table "t1"
@@ -3099,12 +3111,12 @@ SET SESSION AUTHORIZATION regress_rls_bob;
 CREATE TABLE t2 (a integer, b text);
 INSERT INTO t2 (SELECT * FROM t1);
 EXPLAIN (COSTS OFF) INSERT INTO t2 (SELECT * FROM t1);
-             QUERY PLAN              
--------------------------------------
+          QUERY PLAN           
+-------------------------------
  Insert on t2
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (4 rows)
 
 SELECT * FROM t2;
@@ -3129,7 +3141,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM t2;
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t2
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 CREATE TABLE t3 AS SELECT * FROM t1;
@@ -3266,7 +3278,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t1
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 -- Check that default deny does not apply to table owner.
@@ -3303,7 +3315,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on t1
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 -- Check that default deny applies to non-owner/non-superuser when RLS on.
@@ -3315,11 +3327,11 @@ SELECT * FROM t1;
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1;
-             QUERY PLAN              
--------------------------------------
+        QUERY PLAN        
+--------------------------
  Result
    One-Time Filter: false
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
@@ -3329,11 +3341,11 @@ SELECT * FROM t1;
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1;
-             QUERY PLAN              
--------------------------------------
+        QUERY PLAN        
+--------------------------
  Result
    One-Time Filter: false
- Optimizer: Postgres query optimizer
+ Optimizer: GPORCA
 (3 rows)
 
 --
