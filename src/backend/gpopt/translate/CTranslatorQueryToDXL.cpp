@@ -478,12 +478,6 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 				GPOS_WSZ_LIT("security quals present without RLS enabled"));
 		}
-		if (rte->rtekind != RTE_RELATION && nullptr != rte->securityQuals)
-		{
-			GPOS_RAISE(
-				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
-				GPOS_WSZ_LIT("security quals present which is not an RTE"));
-		}
 		if (query->hasSubLinks && query->hasRowSecurity)
 		{
 			GPOS_RAISE(
@@ -3427,46 +3421,85 @@ CTranslatorQueryToDXL::TranslateRTEToDXLLogicalGet(const RangeTblEntry *rte,
 	// make note of the operator classes used in the distribution key
 	NoteDistributionPolicyOpclasses(rte);
 
-	// Translating security quals
-	ULONG arity = gpdb::ListLength(rte->securityQuals);
+	// Translate security quals to DXL
 	CDXLNode *select_dxlnode = nullptr;
-	if (1 == arity)
+	CDXLNode *security_qual_dxlnode = TranslateSecurityQualToDXL(rte);
+
+	if(nullptr != security_qual_dxlnode )
 	{
-		CDXLNode *security_qual_dxlnode = nullptr;
-		Node *security_qual_node =
-			(Node *) lfirst(list_head(rte->securityQuals));
-		security_qual_dxlnode = TranslateExprToDXL((Expr *) security_qual_node);
-		select_dxlnode = GPOS_NEW(m_mp)
-			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		select_dxlnode = GPOS_NEW(m_mp) CDXLNode(
+			m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
 		select_dxlnode->AddChild(security_qual_dxlnode);
 		select_dxlnode->AddChild(dxl_node);
 	}
-	else if (1 < arity)
+
+	return (nullptr != select_dxlnode) ? select_dxlnode : dxl_node;
+}
+
+CDXLNode *
+CTranslatorQueryToDXL::TranslateSecurityQualToDXL(const RangeTblEntry *rte)
+{
+	ULONG arity = gpdb::ListLength(rte->securityQuals);
+
+	if (0 == arity)
 	{
-		CDXLNode *security_qual_and_dxlnode = GPOS_NEW(m_mp)
-			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
-		ListCell *lc = nullptr;
-		ForEach(lc, rte->securityQuals)
-		{
-			CDXLNode *security_qual_arg_dxlnode = nullptr;
-			Node *security_qual_arg_node = (Node *) lfirst(lc);
-			security_qual_arg_dxlnode =
-				TranslateExprToDXL((Expr *) security_qual_arg_node);
-			security_qual_and_dxlnode->AddChild(security_qual_arg_dxlnode);
-		}
-		select_dxlnode = GPOS_NEW(m_mp)
-			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
-		select_dxlnode->AddChild(security_qual_and_dxlnode);
-		select_dxlnode->AddChild(dxl_node);
+		return nullptr;
 	}
 
-	if (nullptr != select_dxlnode)
+	CDXLNode *security_qual_dxlnode = nullptr;
+
+	if (1 == arity)
 	{
-		return select_dxlnode;
+		Node *security_qual_node =
+			(Node *) gpdb::ListNth(rte->securityQuals, 0);
+		security_qual_dxlnode = TranslateExprToDXL((Expr *) security_qual_node);
 	}
 	else
 	{
-		return dxl_node;
+		CDXLNode *security_qual_and_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarBoolExpr(m_mp, Edxland));
+
+		ListCell *lc = nullptr;
+
+		ForEach(lc, rte->securityQuals)
+		{
+			Node *security_qual_arg_node = (Node *) lfirst(lc);
+			CDXLNode *security_qual_arg_dxlnode =
+				TranslateExprToDXL((Expr *) security_qual_arg_node);
+			security_qual_and_dxlnode->AddChild(security_qual_arg_dxlnode);
+		}
+
+		security_qual_dxlnode = security_qual_and_dxlnode;
+	}
+
+	MarkAsSecurityQuals(security_qual_dxlnode);
+	return security_qual_dxlnode;
+}
+
+void
+CTranslatorQueryToDXL::MarkAsSecurityQuals(CDXLNode *node)
+{
+	GPOS_ASSERT(nullptr != node);
+
+	CDXLScalar *scalarOp = dynamic_cast<CDXLScalar *>(node->GetOperator());
+	scalarOp->SetIsSecurityQual(true);
+	Edxlopid eopid = node->GetOperator()->GetDXLOperator();
+
+	if (EdxlopScalarBoolExpr == eopid)
+	{
+		EdxlBoolExprType edxlbooltype =
+			CDXLScalarBoolExpr::Cast(node->GetOperator())->GetDxlBoolTypeStr();
+
+		if (Edxland == edxlbooltype || Edxlor == edxlbooltype)
+		{
+			ULONG child_count = node->Arity();
+
+			for (ULONG ul = 0; ul < child_count; ul++)
+			{
+				CDXLNode *child_dxl_node = (*node)[ul];
+				MarkAsSecurityQuals(child_dxl_node);
+			}
+		}
 	}
 }
 

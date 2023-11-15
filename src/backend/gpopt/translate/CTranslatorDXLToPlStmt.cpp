@@ -654,9 +654,6 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 		&base_table_context,  // base table translation context
 		nullptr, output_context);
 
-	TranslateFilterRemovingExplicitAnd(filter_dxlnode, &base_table_context,
-									   nullptr, &qual, output_context);
-
 	Plan *plan = nullptr;
 	Plan *plan_return = nullptr;
 
@@ -664,6 +661,10 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 	{
 		OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
 		RangeTblEntry *rte = m_dxl_to_plstmt_context->GetRTEByIndex(index);
+		qual = TranslateDXLFilterToQual(
+			filter_dxlnode,
+			&base_table_context,  // base table translation context
+			nullptr, output_context);
 
 		ForeignScan *foreign_scan =
 			gpdb::CreateForeignScan(oidRel, index, qual, targetlist,
@@ -678,7 +679,8 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 		seq_scan->scanrelid = index;
 		plan = &(seq_scan->plan);
 		plan_return = (Plan *) seq_scan;
-
+		TranslateFilterRemovingExplicitAnd(filter_dxlnode, &base_table_context,
+										   nullptr, &qual, output_context);
 		plan->targetlist = targetlist;
 		plan->qual = qual;
 	}

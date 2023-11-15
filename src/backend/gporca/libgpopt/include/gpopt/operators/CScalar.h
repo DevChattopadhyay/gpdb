@@ -55,6 +55,8 @@ private:
 	static CPartInfo *PpartinfoDeriveCombineScalar(CMemoryPool *mp,
 												   CExpressionHandle &exprhdl);
 
+	BOOL m_is_security_qual {false};
+
 protected:
 	// perform conjunction of child boolean evaluation results
 	static EBoolEvalResult EberConjunction(ULongPtrArray *pdrgpulChildren);
@@ -183,6 +185,10 @@ public:
 	{
 		return default_type_modifier;
 	}
+
+	void SetIsSecurityQual(BOOL is_security_qual);
+
+	BOOL GetIsSecurityQual();
 
 };	// class CScalar
 

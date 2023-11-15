@@ -304,6 +304,10 @@ private:
 										  ULONG	 //current_query_level
 	);
 
+	void MarkAsSecurityQuals(CDXLNode *node);
+
+	CDXLNode *TranslateSecurityQualToDXL(const RangeTblEntry *rte);
+
 	void NoteDistributionPolicyOpclasses(const RangeTblEntry *rte);
 
 	// generate a DXL node from column values, where each column value is

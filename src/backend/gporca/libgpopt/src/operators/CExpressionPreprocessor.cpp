@@ -3289,6 +3289,113 @@ CExpressionPreprocessor::ConvertSplitUpdateToInPlaceUpdate(CMemoryPool *mp,
 	return pexpr;
 }
 
+CExpression *
+CExpressionPreprocessor::PexprOrderSecurityQuals(CMemoryPool *mp, CExpression *pexpr)
+{
+	GPOS_ASSERT(nullptr != mp);
+	GPOS_ASSERT(nullptr != pexpr);
+	CExpressionArray *pdrgpexprChildren = GPOS_NEW(mp) CExpressionArray(mp);
+
+	if (COperator::EopLogicalSelect == pexpr->Pop()->Eopid())
+	{
+		CExpression *pexprLogicalChild = (*pexpr)[0];
+		CExpression *pexprScalarChild = (*pexpr)[1];
+
+		if (COperator::EopLogicalGet == pexprLogicalChild->Pop()->Eopid() &&
+			pexprScalarChild->Pop()->FScalar())
+		{
+			pexprLogicalChild->AddRef();
+			pdrgpexprChildren->Append(pexprLogicalChild);
+			CExpression *pexprNewScalarChild = PexprOrderSecurityQualsUtil (mp,pexprScalarChild);
+			pdrgpexprChildren->Append(pexprNewScalarChild);
+			COperator *pop = pexpr->Pop();
+			pop->AddRef();
+			return GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+		}
+	}
+
+	// recursively process children
+	const ULONG arity = pexpr->Arity();
+	for (ULONG ul = 0; ul < arity; ul++)
+	{
+		CExpression *pexprChild =
+			PexprOrderSecurityQuals(mp, (*pexpr)[ul]);
+		pdrgpexprChildren->Append(pexprChild);
+	}
+
+	COperator *pop = pexpr->Pop();
+	pop->AddRef();
+
+	return GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+}
+
+CExpression *
+CExpressionPreprocessor::PexprOrderSecurityQualsUtil(CMemoryPool *mp,
+													 CExpression *pexpr)
+{
+	GPOS_ASSERT(nullptr != mp);
+	GPOS_ASSERT(nullptr != pexpr);
+	GPOS_ASSERT(pexpr->Pop()->FScalar());
+
+	if (CUtils::FScalarBoolOp(pexpr))
+	{
+		CScalarBoolOp *popScBoolOp = CScalarBoolOp::PopConvert(pexpr->Pop());
+		CScalarBoolOp::EBoolOperator eboolop = popScBoolOp->Eboolop();
+
+		// When the parent operator of the predicate is NOT, it indicates a
+		// single predicate. Conversely, if the parent operator is OR, it implies
+		// that all predicates are either security quals or user-provided quals.
+		// In both scenarios, reordering is unnecessary.
+		if (CScalarBoolOp::EboolopOr == eboolop ||
+			CScalarBoolOp::EboolopNot == eboolop)
+		{
+			return PexprOrderSecurityQuals(mp, pexpr);
+		}
+
+
+		if ((dynamic_cast<CScalar *>(pexpr->Pop()))->GetIsSecurityQual())
+		{
+			return PexprOrderSecurityQuals(mp, pexpr);
+		}
+
+		// the main logic to order security quals
+		ULONG arity = pexpr->Arity();
+		CExpressionArray *pdrgpexprSecurityQuals =
+			GPOS_NEW(mp) CExpressionArray(mp);
+		CExpressionArray *pdrgpexprNonSecurityQuals =
+			GPOS_NEW(mp) CExpressionArray(mp);
+		CExpressionArray *pdrgpexprCombined = GPOS_NEW(mp) CExpressionArray(mp);
+		for (ULONG ul = 0; ul < arity; ul++)
+		{
+			CExpression *pexprChild = (*pexpr)[ul];
+			if ((dynamic_cast<CScalar *>(pexprChild->Pop()))
+					->GetIsSecurityQual())
+			{
+				pdrgpexprSecurityQuals->Append(
+					PexprOrderSecurityQuals(mp, pexprChild));
+			}
+			else
+			{
+				pdrgpexprNonSecurityQuals->Append(
+					PexprOrderSecurityQuals(mp, pexprChild));
+			}
+		}
+
+		for (ULONG ul = 0; ul < pdrgpexprSecurityQuals->Size(); ul++)
+		{
+			pdrgpexprCombined->Append((*pdrgpexprSecurityQuals)[ul]);
+		}
+		for (ULONG ul = 0; ul < pdrgpexprNonSecurityQuals->Size(); ul++)
+		{
+			pdrgpexprCombined->Append((*pdrgpexprNonSecurityQuals)[ul]);
+		}
+
+		return CPredicateUtils::PexprConjunction(mp, pdrgpexprCombined);
+	}
+
+	return PexprOrderSecurityQuals(mp, pexpr);
+}
+
 // main driver, pre-processing of input logical expression
 CExpression *
 CExpressionPreprocessor::PexprPreprocess(
@@ -3519,7 +3626,13 @@ CExpressionPreprocessor::PexprPreprocess(
 	GPOS_CHECK_ABORT;
 	pexprSplitUpdateToInplace->Release();
 
-	return pexprNormalized2;
+//	return pexprNormalized2;
+
+	// (31) Place security quals before any other quals if RLS is enabled
+	CExpression *pexprOrderSecurityQuals =
+		PexprOrderSecurityQuals(mp, pexprNormalized2);
+	pexprNormalized2->Release();
+	return pexprOrderSecurityQuals;
 }
 
 // EOF
