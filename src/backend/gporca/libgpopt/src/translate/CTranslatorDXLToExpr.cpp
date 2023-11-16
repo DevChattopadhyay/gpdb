@@ -2591,15 +2591,27 @@ CTranslatorDXLToExpr::PexprScalar(const CDXLNode *dxlnode)
 				dxlnode->GetOperator()->GetDXLOperatorType());
 	CDXLOperator *dxl_op = dxlnode->GetOperator();
 	ULONG ulOpId = (ULONG) dxl_op->GetDXLOperator();
+	CExpression * pexprScalar=nullptr;
 
 	if (EdxlopScalarSubqueryExists == ulOpId ||
 		EdxlopScalarSubqueryNotExists == ulOpId)
 	{
-		return PexprScalarSubqueryExistential(
+		pexprScalar = PexprScalarSubqueryExistential(
 			dxlnode->GetOperator()->GetDXLOperator(), (*dxlnode)[0]);
+
+		CDXLScalar *dxlScalarOp =
+			dynamic_cast<CDXLScalar *>(dxlnode->GetOperator());
+		CScalar *scalarOp = dynamic_cast<CScalar *>(pexprScalar->Pop());
+
+		if (dxlScalarOp->GetIsSecurityQual())
+		{
+			scalarOp->SetIsSecurityQual(true);
+		}
+
+		return pexprScalar;
+
 	}
 
-	CExpression * pexprScalar=nullptr;
 	switch (dxl_op->GetDXLOperator())
 	{
 		case EdxlopScalarIdent:
@@ -2622,55 +2634,80 @@ CTranslatorDXLToExpr::PexprScalar(const CDXLNode *dxlnode)
 			break;
 		case EdxlopScalarFuncExpr:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarFunc(dxlnode);
+			break;
 		case EdxlopScalarMinMax:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarMinMax(dxlnode);
+			break;
 		case EdxlopScalarAggref:
 			pexprScalar =   CTranslatorDXLToExpr::PexprAggFunc(dxlnode);
+			break;
 		case EdxlopScalarWindowRef:
 			pexprScalar =   CTranslatorDXLToExpr::PexprWindowFunc(dxlnode);
+			break;
 		case EdxlopScalarNullTest:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarNullTest(dxlnode);
+			break;
 		case EdxlopScalarNullIf:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarNullIf(dxlnode);
+			break;
 		case EdxlopScalarBooleanTest:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarBooleanTest(dxlnode);
+			break;
 		case EdxlopScalarIfStmt:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarIf(dxlnode);
+			break;
 		case EdxlopScalarSwitch:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarSwitch(dxlnode);
+			break;
 		case EdxlopScalarSwitchCase:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarSwitchCase(dxlnode);
+			break;
 		case EdxlopScalarCaseTest:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarCaseTest(dxlnode);
+			break;
 		case EdxlopScalarCoalesce:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarCoalesce(dxlnode);
+			break;
 		case EdxlopScalarArrayCoerceExpr:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarArrayCoerceExpr(dxlnode);
+			break;
 		case EdxlopScalarCast:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarCast(dxlnode);
+			break;
 		case EdxlopScalarCoerceToDomain:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarCoerceToDomain(dxlnode);
+			break;
 		case EdxlopScalarCoerceViaIO:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarCoerceViaIO(dxlnode);
+			break;
 		case EdxlopScalarSubquery:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarSubquery(dxlnode);
+			break;
 		case EdxlopScalarSubqueryAny:
 		case EdxlopScalarSubqueryAll:
 			pexprScalar =   CTranslatorDXLToExpr::PexprScalarSubqueryQuantified(dxlnode);
+			break;
 		case EdxlopScalarArray:
 			pexprScalar =   CTranslatorDXLToExpr::PexprArray(dxlnode);
+			break;
 		case EdxlopScalarArrayComp:
 			pexprScalar =   CTranslatorDXLToExpr::PexprArrayCmp(dxlnode);
+			break;
 		case EdxlopScalarArrayRef:
 			pexprScalar =   CTranslatorDXLToExpr::PexprArrayRef(dxlnode);
+			break;
 		case EdxlopScalarArrayRefIndexList:
 			pexprScalar =   CTranslatorDXLToExpr::PexprArrayRefIndexList(dxlnode);
+			break;
 		case EdxlopScalarValuesList:
 			pexprScalar =   CTranslatorDXLToExpr::PexprValuesList(dxlnode);
+			break;
 		case EdxlopScalarSortGroupClause:
 			pexprScalar =   CTranslatorDXLToExpr::PexprSortGroupClause(dxlnode);
+			break;
 		case EdxlopScalarFieldSelect:
 			pexprScalar =   CTranslatorDXLToExpr::PexprFieldSelect(dxlnode);
+			break;
 		default:
 			GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiUnsupportedOp,
 					   dxl_op->GetOpNameStr()->GetBuffer());

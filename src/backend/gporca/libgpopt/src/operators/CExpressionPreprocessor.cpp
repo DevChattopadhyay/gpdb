@@ -3300,13 +3300,16 @@ CExpressionPreprocessor::PexprOrderSecurityQuals(CMemoryPool *mp, CExpression *p
 	{
 		CExpression *pexprLogicalChild = (*pexpr)[0];
 		CExpression *pexprScalarChild = (*pexpr)[1];
-
-		if (COperator::EopLogicalGet == pexprLogicalChild->Pop()->Eopid() &&
+		COperator::EOperatorId eopid = pexprLogicalChild->Pop()->Eopid();
+		if ((COperator::EopLogicalGet == eopid ||
+			 COperator::EopLogicalForeignGet == eopid ||
+			 COperator::EopLogicalDynamicGet == eopid) &&
 			pexprScalarChild->Pop()->FScalar())
 		{
 			pexprLogicalChild->AddRef();
 			pdrgpexprChildren->Append(pexprLogicalChild);
-			CExpression *pexprNewScalarChild = PexprOrderSecurityQualsUtil (mp,pexprScalarChild);
+			CExpression *pexprNewScalarChild =
+				PexprOrderSecurityQualsUtil(mp, pexprScalarChild);
 			pdrgpexprChildren->Append(pexprNewScalarChild);
 			COperator *pop = pexpr->Pop();
 			pop->AddRef();
