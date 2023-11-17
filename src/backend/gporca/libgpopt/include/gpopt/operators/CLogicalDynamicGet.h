@@ -42,6 +42,8 @@ protected:
 	// Indexes correspond to partitions
 	IMdIdArray *m_foreign_server_mdids{nullptr};
 
+	BOOL m_hasSecurityQuals {false};
+
 public:
 	CLogicalDynamicGet(const CLogicalDynamicGet &) = delete;
 
@@ -198,6 +200,16 @@ public:
 		GPOS_ASSERT(EopLogicalDynamicGet == pop->Eopid());
 
 		return dynamic_cast<CLogicalDynamicGet *>(pop);
+	}
+
+	void SetHasSecurityQuals(BOOL hasSecurityQuals)
+	{
+		m_hasSecurityQuals = hasSecurityQuals;
+	}
+
+	BOOL GetHasSecurityQuals()
+	{
+		return m_hasSecurityQuals;
 	}
 
 	// debug print

@@ -3412,6 +3412,11 @@ CTranslatorQueryToDXL::TranslateRTEToDXLLogicalGet(const RangeTblEntry *rte,
 		dxl_op = GPOS_NEW(m_mp) CDXLLogicalGet(m_mp, dxl_table_descr);
 	}
 
+	if (0 < gpdb::ListLength(rte->securityQuals))
+	{
+		dxl_op->SetHasSecurityQuals(true);
+	}
+
 	CDXLNode *dxl_node = GPOS_NEW(m_mp) CDXLNode(m_mp, dxl_op);
 
 	// make note of new columns from base relation

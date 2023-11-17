@@ -35,6 +35,8 @@ private:
 	// table descriptor for the scanned table
 	CDXLTableDescr *m_dxl_table_descr;
 
+	BOOL m_hasSecurityQuals {false};
+
 public:
 	CDXLLogicalGet(CDXLLogicalGet &) = delete;
 
@@ -65,6 +67,16 @@ public:
 					EdxlopLogicalForeignGet == dxl_op->GetDXLOperator());
 
 		return dynamic_cast<CDXLLogicalGet *>(dxl_op);
+	}
+
+	void SetHasSecurityQuals(BOOL hasSecurityQuals)
+	{
+		m_hasSecurityQuals = hasSecurityQuals;
+	}
+
+	BOOL GetHasSecurityQuals()
+	{
+		return m_hasSecurityQuals;
 	}
 
 #ifdef GPOS_DEBUG

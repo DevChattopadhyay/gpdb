@@ -2423,6 +2423,15 @@ CXformUtils::PexprBuildBtreeIndexPlan(
 
 	BOOL fDynamicGet = (COperator::EopLogicalDynamicGet == op_id);
 
+	if ((CLogical::EopLogicalGet == op_id &&
+		 CLogicalGet::PopConvert(pexprGet->Pop())->GetHasSecurityQuals()) ||
+		(CLogical::EopLogicalDynamicGet == op_id &&
+		 CLogicalDynamicGet::PopConvert(pexprGet->Pop())
+			 ->GetHasSecurityQuals()))
+		{
+			return nullptr;
+		}
+
 	CTableDescriptor *ptabdesc = pexprGet->DeriveTableDescriptor();
 	GPOS_ASSERT(nullptr != ptabdesc);
 	CColRefArray *pdrgpcrOutput = nullptr;

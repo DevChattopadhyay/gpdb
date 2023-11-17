@@ -574,6 +574,14 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 {
 	CDXLOperator *dxl_op = dxlnode->GetOperator();
 	Edxlopid edxlopid = dxl_op->GetDXLOperator();
+	BOOL relationHasSecurityQuals =false;
+
+	if (EdxlopLogicalGet == edxlopid || EdxlopLogicalForeignGet == edxlopid)
+	{
+		CDXLLogicalGet *dxl_logical_get =
+			dynamic_cast<CDXLLogicalGet *>(dxl_op);
+		relationHasSecurityQuals = dxl_logical_get->GetHasSecurityQuals();
+	}
 
 	// translate the table descriptor
 	CDXLTableDescr *table_descr =
@@ -640,6 +648,7 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 
 		// get the output column references from the dynamic get
 		colref_array = popDynamicGet->PdrgpcrOutput();
+		popDynamicGet->SetHasSecurityQuals(relationHasSecurityQuals);
 	}
 	else
 	{
@@ -655,6 +664,8 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 
 		// get the output column references
 		colref_array = CLogicalGet::PopConvert(popGet)->PdrgpcrOutput();
+		CLogicalGet::PopConvert(popGet)->SetHasSecurityQuals(
+			relationHasSecurityQuals);
 	}
 
 	CExpression *pexpr = GPOS_NEW(m_mp) CExpression(m_mp, popGet);
