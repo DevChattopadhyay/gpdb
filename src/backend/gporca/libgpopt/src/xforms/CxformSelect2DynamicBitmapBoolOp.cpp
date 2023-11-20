@@ -84,11 +84,6 @@ CXformSelect2DynamicBitmapBoolOp::Transform(CXformContext *pxfctxt,
 		return;
 	}
 
-	if (popGet->GetHasSecurityQuals())
-	{
-		return;
-	}
-
 	CMemoryPool *mp = pxfctxt->Pmp();
 	CExpression *pexprResult = CXformUtils::PexprSelect2BitmapBoolOp(mp, pexpr);
 

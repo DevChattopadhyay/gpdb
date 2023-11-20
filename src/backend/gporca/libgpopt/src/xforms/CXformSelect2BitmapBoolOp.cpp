@@ -75,11 +75,6 @@ CXformSelect2BitmapBoolOp::Transform(CXformContext *pxfctxt,
 	GPOS_ASSERT(FPromising(pxfctxt->Pmp(), this, pexpr));
 	GPOS_ASSERT(FCheckPattern(pexpr));
 
-	if (CLogicalGet::PopConvert(pexpr->Pop())->GetHasSecurityQuals())
-	{
-		return;
-	}
-
 	CExpression *pexprResult =
 		CXformUtils::PexprSelect2BitmapBoolOp(pxfctxt->Pmp(), pexpr);
 
