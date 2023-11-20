@@ -478,7 +478,7 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 				GPOS_WSZ_LIT("security quals present without RLS enabled"));
 		}
-		if (query->hasSubLinks && query->hasRowSecurity)
+		if (query->hasRowSecurity && query->hasSubLinks && 0 < gpdb::ListLength(rte->securityQuals))
 		{
 			GPOS_RAISE(
 				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,

@@ -654,6 +654,9 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 		&base_table_context,  // base table translation context
 		nullptr, output_context);
 
+	TranslateFilterRemovingExplicitAnd(filter_dxlnode, &base_table_context,
+									   nullptr, &qual, output_context);
+
 	Plan *plan = nullptr;
 	Plan *plan_return = nullptr;
 
@@ -661,11 +664,6 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 	{
 		OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
 		RangeTblEntry *rte = m_dxl_to_plstmt_context->GetRTEByIndex(index);
-		qual = TranslateDXLFilterToQual(
-			filter_dxlnode,
-			&base_table_context,  // base table translation context
-			nullptr, output_context);
-
 		ForeignScan *foreign_scan =
 			gpdb::CreateForeignScan(oidRel, index, qual, targetlist,
 									m_dxl_to_plstmt_context->m_orig_query, rte);
@@ -679,8 +677,6 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 		seq_scan->scanrelid = index;
 		plan = &(seq_scan->plan);
 		plan_return = (Plan *) seq_scan;
-		TranslateFilterRemovingExplicitAnd(filter_dxlnode, &base_table_context,
-										   nullptr, &qual, output_context);
 		plan->targetlist = targetlist;
 		plan->qual = qual;
 	}
@@ -4671,11 +4667,14 @@ CTranslatorDXLToPlStmt::TranslateDXLDynForeignScan(
 
 	List *targetlist = NIL;
 	List *qual = NIL;
-	TranslateProjListAndFilter(
-		project_list_dxlnode, filter_dxlnode,
-		&base_table_context,  // translate context for the base table
-		nullptr,			  // translate_ctxt_left and pdxltrctxRight,
-		&targetlist, &qual, output_context);
+
+	targetlist = TranslateDXLProjList(
+		project_list_dxlnode,
+		&base_table_context,  // base table translation context
+		nullptr, output_context);
+
+	TranslateFilterRemovingExplicitAnd(filter_dxlnode, &base_table_context,
+									   nullptr, &qual, output_context);
 
 	// set the rte relid to the child, since we need to call the fdw api
 	// which assumes we're working with a foreign table. The root partition is

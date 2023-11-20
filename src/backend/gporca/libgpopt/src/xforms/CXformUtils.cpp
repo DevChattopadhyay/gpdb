@@ -2428,9 +2428,9 @@ CXformUtils::PexprBuildBtreeIndexPlan(
 		(CLogical::EopLogicalDynamicGet == op_id &&
 		 CLogicalDynamicGet::PopConvert(pexprGet->Pop())
 			 ->GetHasSecurityQuals()))
-		{
-			return nullptr;
-		}
+	{
+		return nullptr;
+	}
 
 	CTableDescriptor *ptabdesc = pexprGet->DeriveTableDescriptor();
 	GPOS_ASSERT(nullptr != ptabdesc);

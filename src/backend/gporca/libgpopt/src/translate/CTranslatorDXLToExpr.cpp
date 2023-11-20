@@ -575,13 +575,8 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 	CDXLOperator *dxl_op = dxlnode->GetOperator();
 	Edxlopid edxlopid = dxl_op->GetDXLOperator();
 	BOOL relationHasSecurityQuals =false;
-
-	if (EdxlopLogicalGet == edxlopid || EdxlopLogicalForeignGet == edxlopid)
-	{
-		CDXLLogicalGet *dxl_logical_get =
-			dynamic_cast<CDXLLogicalGet *>(dxl_op);
-		relationHasSecurityQuals = dxl_logical_get->GetHasSecurityQuals();
-	}
+	CDXLLogicalGet *dxl_logical_get = dynamic_cast<CDXLLogicalGet *>(dxl_op);
+	relationHasSecurityQuals = dxl_logical_get->GetHasSecurityQuals();
 
 	// translate the table descriptor
 	CDXLTableDescr *table_descr =

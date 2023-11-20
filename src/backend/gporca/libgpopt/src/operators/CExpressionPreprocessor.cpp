@@ -3368,31 +3368,35 @@ CExpressionPreprocessor::PexprOrderSecurityQualsUtil(CMemoryPool *mp,
 		CExpressionArray *pdrgpexprNonSecurityQuals =
 			GPOS_NEW(mp) CExpressionArray(mp);
 		CExpressionArray *pdrgpexprCombined = GPOS_NEW(mp) CExpressionArray(mp);
+		CExpression * pexprNew=nullptr;
 		for (ULONG ul = 0; ul < arity; ul++)
 		{
 			CExpression *pexprChild = (*pexpr)[ul];
-			if ((dynamic_cast<CScalar *>(pexprChild->Pop()))
-					->GetIsSecurityQual())
+			CScalar *scalarOp = dynamic_cast<CScalar *>(pexprChild->Pop());
+			if (scalarOp->GetIsSecurityQual())
 			{
-				pdrgpexprSecurityQuals->Append(
-					PexprOrderSecurityQuals(mp, pexprChild));
+				pexprNew = PexprOrderSecurityQuals(mp, pexprChild);
+				pdrgpexprSecurityQuals->Append(pexprNew);
 			}
 			else
 			{
-				pdrgpexprNonSecurityQuals->Append(
-					PexprOrderSecurityQuals(mp, pexprChild));
+				pexprNew=PexprOrderSecurityQuals(mp, pexprChild);
+				pdrgpexprNonSecurityQuals->Append(pexprNew);
 			}
 		}
 
 		for (ULONG ul = 0; ul < pdrgpexprSecurityQuals->Size(); ul++)
 		{
+			((*pdrgpexprSecurityQuals)[ul])->AddRef();
 			pdrgpexprCombined->Append((*pdrgpexprSecurityQuals)[ul]);
 		}
 		for (ULONG ul = 0; ul < pdrgpexprNonSecurityQuals->Size(); ul++)
 		{
+			((*pdrgpexprNonSecurityQuals)[ul])->AddRef();
 			pdrgpexprCombined->Append((*pdrgpexprNonSecurityQuals)[ul]);
 		}
-
+		pdrgpexprSecurityQuals->Release();
+		pdrgpexprNonSecurityQuals->Release();
 		return CPredicateUtils::PexprConjunction(mp, pdrgpexprCombined);
 	}
 
@@ -3628,8 +3632,6 @@ CExpressionPreprocessor::PexprPreprocess(
 		CNormalizer::PexprNormalize(mp, pexprSplitUpdateToInplace);
 	GPOS_CHECK_ABORT;
 	pexprSplitUpdateToInplace->Release();
-
-//	return pexprNormalized2;
 
 	// (31) Place security quals before any other quals if RLS is enabled
 	CExpression *pexprOrderSecurityQuals =
