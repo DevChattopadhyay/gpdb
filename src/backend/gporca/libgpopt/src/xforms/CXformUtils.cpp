@@ -3339,18 +3339,6 @@ CXformUtils::PexprSelect2BitmapBoolOp(CMemoryPool *mp, CExpression *pexpr)
 	CExpression *pexprRelational = (*pexpr)[0];
 	CExpression *pexprScalar = (*pexpr)[1];
 	CLogical *popGet = CLogical::PopConvert(pexprRelational->Pop());
-	COperator::EOperatorId op_id = pexprRelational->Pop()->Eopid();
-
-	if ((CLogical::EopLogicalGet == op_id &&
-		 CLogicalGet::PopConvert(pexprRelational->Pop())
-			 ->GetHasSecurityQuals()) ||
-		(CLogical::EopLogicalDynamicGet == op_id &&
-		 CLogicalDynamicGet::PopConvert(pexprRelational->Pop())
-			 ->GetHasSecurityQuals()))
-	{
-		return nullptr;
-	}
-
 	CTableDescriptor *ptabdesc = pexprRelational->DeriveTableDescriptor();
 	GPOS_ASSERT(nullptr != ptabdesc);
 	const ULONG ulIndices = ptabdesc->IndexCount();
@@ -3395,6 +3383,14 @@ CXformUtils::PexprBitmapTableGet(CMemoryPool *mp, CLogical *popGet,
 				COperator::EopLogicalDynamicGet == popGet->Eopid());
 
 	BOOL fDynamicGet = (COperator::EopLogicalDynamicGet == popGet->Eopid());
+
+	if ((CLogical::EopLogicalGet == popGet->Eopid() &&
+		 (dynamic_cast<CLogicalGet *>(popGet))->GetHasSecurityQuals()) ||
+		(fDynamicGet &&
+		 (dynamic_cast<CLogicalDynamicGet *>(popGet))->GetHasSecurityQuals()))
+	{
+		return nullptr;
+	}
 
 	BOOL fConjunction = CPredicateUtils::FAnd(pexprScalar);
 

@@ -2918,6 +2918,8 @@ CExpressionPreprocessor::PrunePartitions(CMemoryPool *mp, CExpression *expr)
 			selected_partition_mdids, selected_part_cnstr_disj, true,
 			foreign_server_mdids);
 
+		new_dyn_get->SetHasSecurityQuals(dyn_get->GetHasSecurityQuals());
+
 		CExpressionArray *select_children = GPOS_NEW(mp) CExpressionArray(mp);
 		select_children->Append(GPOS_NEW(mp) CExpression(mp, new_dyn_get));
 		select_children->Append(PrunePartitions(mp, filter_pred));
