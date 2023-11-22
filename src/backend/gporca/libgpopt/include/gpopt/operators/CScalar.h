@@ -51,6 +51,8 @@ public:
 	};
 
 private:
+	BOOL m_is_security_qual{false};
+
 	// helper for combining partition consumer arrays of scalar children
 	static CPartInfo *PpartinfoDeriveCombineScalar(CMemoryPool *mp,
 												   CExpressionHandle &exprhdl);
@@ -183,6 +185,10 @@ public:
 	{
 		return default_type_modifier;
 	}
+
+	void SetIsSecurityQual(BOOL is_security_qual);
+
+	BOOL GetIsSecurityQual();
 
 };	// class CScalar
 
