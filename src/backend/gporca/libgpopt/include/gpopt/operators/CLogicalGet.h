@@ -49,7 +49,7 @@ private:
 	CColRefSet *m_pcrsDist;
 
 	// Are security quals present
-	BOOL m_hasSecurityQuals {false};
+	BOOL m_hasSecurityQuals{false};
 
 	void CreatePartCols(CMemoryPool *mp, const ULongPtrArray *pdrgpulPart);
 
@@ -118,12 +118,14 @@ public:
 		return m_pdrgpdrgpcrPart;
 	}
 
-	void SetHasSecurityQuals(BOOL hasSecurityQuals)
+	void
+	SetHasSecurityQuals(BOOL hasSecurityQuals)
 	{
 		m_hasSecurityQuals = hasSecurityQuals;
 	}
 
-	BOOL GetHasSecurityQuals()
+	BOOL
+	GetHasSecurityQuals() const
 	{
 		return m_hasSecurityQuals;
 	}

@@ -3292,7 +3292,8 @@ CExpressionPreprocessor::ConvertSplitUpdateToInPlaceUpdate(CMemoryPool *mp,
 }
 
 CExpression *
-CExpressionPreprocessor::PexprOrderSecurityQuals(CMemoryPool *mp, CExpression *pexpr)
+CExpressionPreprocessor::PexprOrderSecurityQuals(CMemoryPool *mp,
+												 CExpression *pexpr)
 {
 	GPOS_ASSERT(nullptr != mp);
 	GPOS_ASSERT(nullptr != pexpr);
@@ -3323,8 +3324,7 @@ CExpressionPreprocessor::PexprOrderSecurityQuals(CMemoryPool *mp, CExpression *p
 	const ULONG arity = pexpr->Arity();
 	for (ULONG ul = 0; ul < arity; ul++)
 	{
-		CExpression *pexprChild =
-			PexprOrderSecurityQuals(mp, (*pexpr)[ul]);
+		CExpression *pexprChild = PexprOrderSecurityQuals(mp, (*pexpr)[ul]);
 		pdrgpexprChildren->Append(pexprChild);
 	}
 
@@ -3370,7 +3370,7 @@ CExpressionPreprocessor::PexprOrderSecurityQualsUtil(CMemoryPool *mp,
 		CExpressionArray *pdrgpexprNonSecurityQuals =
 			GPOS_NEW(mp) CExpressionArray(mp);
 		CExpressionArray *pdrgpexprCombined = GPOS_NEW(mp) CExpressionArray(mp);
-		CExpression * pexprNew=nullptr;
+		CExpression *pexprNew = nullptr;
 		for (ULONG ul = 0; ul < arity; ul++)
 		{
 			CExpression *pexprChild = (*pexpr)[ul];
@@ -3382,7 +3382,7 @@ CExpressionPreprocessor::PexprOrderSecurityQualsUtil(CMemoryPool *mp,
 			}
 			else
 			{
-				pexprNew=PexprOrderSecurityQuals(mp, pexprChild);
+				pexprNew = PexprOrderSecurityQuals(mp, pexprChild);
 				pdrgpexprNonSecurityQuals->Append(pexprNew);
 			}
 		}

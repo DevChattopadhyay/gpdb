@@ -478,7 +478,8 @@ CTranslatorQueryToDXL::CheckRangeTable(Query *query)
 				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 				GPOS_WSZ_LIT("security quals present without RLS enabled"));
 		}
-		if (query->hasRowSecurity && query->hasSubLinks && 0 < gpdb::ListLength(rte->securityQuals))
+		if (query->hasRowSecurity && query->hasSubLinks &&
+			0 < gpdb::ListLength(rte->securityQuals))
 		{
 			GPOS_RAISE(
 				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
@@ -3430,10 +3431,10 @@ CTranslatorQueryToDXL::TranslateRTEToDXLLogicalGet(const RangeTblEntry *rte,
 	CDXLNode *select_dxlnode = nullptr;
 	CDXLNode *security_qual_dxlnode = TranslateSecurityQualToDXL(rte);
 
-	if(nullptr != security_qual_dxlnode )
+	if (nullptr != security_qual_dxlnode)
 	{
-		select_dxlnode = GPOS_NEW(m_mp) CDXLNode(
-			m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
+		select_dxlnode = GPOS_NEW(m_mp)
+			CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalSelect(m_mp));
 		select_dxlnode->AddChild(security_qual_dxlnode);
 		select_dxlnode->AddChild(dxl_node);
 	}

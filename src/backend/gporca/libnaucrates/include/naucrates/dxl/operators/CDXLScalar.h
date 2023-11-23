@@ -38,7 +38,8 @@ using namespace gpopt;
 class CDXLScalar : public CDXLOperator
 {
 private:
-	BOOL m_is_security_qual {false};
+	BOOL m_is_security_qual{false};
+
 public:
 	CDXLScalar(CDXLScalar &) = delete;
 
@@ -54,7 +55,7 @@ public:
 
 	void SetIsSecurityQual(BOOL is_security_qual);
 
-	BOOL GetIsSecurityQual();
+	BOOL GetIsSecurityQual() const;
 
 
 #ifdef GPOS_DEBUG

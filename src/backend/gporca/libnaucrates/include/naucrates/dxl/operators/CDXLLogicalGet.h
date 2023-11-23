@@ -35,7 +35,7 @@ private:
 	// table descriptor for the scanned table
 	CDXLTableDescr *m_dxl_table_descr;
 
-	BOOL m_hasSecurityQuals {false};
+	BOOL m_hasSecurityQuals{false};
 
 public:
 	CDXLLogicalGet(CDXLLogicalGet &) = delete;
@@ -69,12 +69,14 @@ public:
 		return dynamic_cast<CDXLLogicalGet *>(dxl_op);
 	}
 
-	void SetHasSecurityQuals(BOOL hasSecurityQuals)
+	void
+	SetHasSecurityQuals(BOOL hasSecurityQuals)
 	{
 		m_hasSecurityQuals = hasSecurityQuals;
 	}
 
-	BOOL GetHasSecurityQuals()
+	BOOL
+	GetHasSecurityQuals() const
 	{
 		return m_hasSecurityQuals;
 	}

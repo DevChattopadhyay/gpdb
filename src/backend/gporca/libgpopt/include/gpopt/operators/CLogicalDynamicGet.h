@@ -42,7 +42,7 @@ protected:
 	// Indexes correspond to partitions
 	IMdIdArray *m_foreign_server_mdids{nullptr};
 
-	BOOL m_hasSecurityQuals {false};
+	BOOL m_hasSecurityQuals{false};
 
 public:
 	CLogicalDynamicGet(const CLogicalDynamicGet &) = delete;
@@ -202,12 +202,14 @@ public:
 		return dynamic_cast<CLogicalDynamicGet *>(pop);
 	}
 
-	void SetHasSecurityQuals(BOOL hasSecurityQuals)
+	void
+	SetHasSecurityQuals(BOOL hasSecurityQuals)
 	{
 		m_hasSecurityQuals = hasSecurityQuals;
 	}
 
-	BOOL GetHasSecurityQuals()
+	BOOL
+	GetHasSecurityQuals() const
 	{
 		return m_hasSecurityQuals;
 	}
