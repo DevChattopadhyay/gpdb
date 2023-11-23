@@ -2423,15 +2423,6 @@ CXformUtils::PexprBuildBtreeIndexPlan(
 
 	BOOL fDynamicGet = (COperator::EopLogicalDynamicGet == op_id);
 
-	if ((CLogical::EopLogicalGet == op_id &&
-		 CLogicalGet::PopConvert(pexprGet->Pop())->GetHasSecurityQuals()) ||
-		(CLogical::EopLogicalDynamicGet == op_id &&
-		 CLogicalDynamicGet::PopConvert(pexprGet->Pop())
-			 ->GetHasSecurityQuals()))
-	{
-		return nullptr;
-	}
-
 	CTableDescriptor *ptabdesc = pexprGet->DeriveTableDescriptor();
 	GPOS_ASSERT(nullptr != ptabdesc);
 	CColRefArray *pdrgpcrOutput = nullptr;
@@ -2522,6 +2513,19 @@ CXformUtils::PexprBuildBtreeIndexPlan(
 		outer_refs_in_index_get->Release();
 
 		return nullptr;
+	}
+
+	if ((CLogical::EopLogicalGet == op_id &&
+		 CLogicalGet::PopConvert(pexprGet->Pop())->GetHasSecurityQuals()) ||
+		(fDynamicGet && CLogicalDynamicGet::PopConvert(pexprGet->Pop())
+							->GetHasSecurityQuals()))
+	{
+		GPOS_DELETE(alias);
+		pdrgppcrIndexCols->Release();
+		pdrgpexprResidual->Release();
+		pdrgpexprIndex->Release();
+		outer_refs_in_index_get->Release();
+		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiNoPlanFound);
 	}
 
 	// most GiST indexes are lossy, so conservatively re-add all the index quals to the residual so that they can be rechecked
@@ -3384,20 +3388,11 @@ CXformUtils::PexprBitmapTableGet(CMemoryPool *mp, CLogical *popGet,
 
 	BOOL fDynamicGet = (COperator::EopLogicalDynamicGet == popGet->Eopid());
 
-	if ((CLogical::EopLogicalGet == popGet->Eopid() &&
-		 (dynamic_cast<CLogicalGet *>(popGet))->GetHasSecurityQuals()) ||
-		(fDynamicGet &&
-		 (dynamic_cast<CLogicalDynamicGet *>(popGet))->GetHasSecurityQuals()))
-	{
-		return nullptr;
-	}
-
 	BOOL fConjunction = CPredicateUtils::FAnd(pexprScalar);
 
 	CExpressionArray *pdrgpexpr = GPOS_NEW(mp) CExpressionArray(mp);
 	pexprScalar->AddRef();
 	pdrgpexpr->Append(pexprScalar);
-
 
 	GPOS_ASSERT(0 < pdrgpexpr->Size());
 
@@ -3418,6 +3413,16 @@ CXformUtils::PexprBitmapTableGet(CMemoryPool *mp, CLogical *popGet,
 		&pexprResidual, false /*isAPartialPredicate*/
 	);
 	CExpression *pexprResult = nullptr;
+
+	if (nullptr != pexprBitmap &&
+		((CLogical::EopLogicalGet == popGet->Eopid() &&
+		  (dynamic_cast<CLogicalGet *>(popGet))->GetHasSecurityQuals()) ||
+		 (fDynamicGet &&
+		  (dynamic_cast<CLogicalDynamicGet *>(popGet))->GetHasSecurityQuals())))
+	{
+		pdrgpexpr->Release();
+		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiNoPlanFound);
+	}
 
 	if (nullptr != pexprBitmap)
 	{
