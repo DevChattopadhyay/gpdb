@@ -57,7 +57,7 @@
 #include "cdb/cdbsetop.h"
 #include "cdb/cdbvars.h"
 #include "commands/tablecmds.h"
-
+#include "utils/guc.h"
 
 typedef struct
 {
@@ -1556,9 +1556,36 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			root->rowMarks = lappend(root->rowMarks, newrc);
 		}
 
-		/* Close child relations, but keep locks */
 		if (childOID != parentOID)
-			heap_close(newrelation, rel_needs_long_lock(childOID) ? NoLock: lockmode);
+		{
+			LOCKMODE	releaseLockMode;
+
+			/*
+			 * GPDB: Decide whether we should relinquish locks on children.
+			 *
+			 * If gp_keep_partition_children_locks is on, and we have an AO child,
+			 * then we keep the lock. This is the preferred behavior for strict
+			 * correctness for concurrent AO vacuums.
+			 *
+			 * Otherwise, we defer to rel_needs_long_lock(), which taps into the
+			 * GP specific optimization of locking only the parent in a partition
+			 * hierarchy, to save on memory and lock consumption inside a tx.
+			 * For example, if we didn't release the locks here, and we were
+			 * doing a join between two partition roots, with say P1 and P2
+			 * number of children, we would have (P1 + P2) locks being held till
+			 * end of command. Similarly, in the same transaction if we operate
+			 * on these 2 partition hierarchies in any way, we would be holding
+			 * (P1 + P2) locks till the end of the transaction.
+			 */
+			if (RelationIsAppendOptimized(newrelation) &&
+				parent_is_partitioned &&
+				gp_keep_partition_children_locks)
+				releaseLockMode = NoLock;
+			else
+				releaseLockMode = rel_needs_long_lock(childOID) ? NoLock: lockmode;
+
+			heap_close(newrelation, releaseLockMode);
+		}
 	}
 
 	heap_close(oldrelation, NoLock);
