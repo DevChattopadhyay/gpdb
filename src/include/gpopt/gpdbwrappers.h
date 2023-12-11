@@ -676,6 +676,8 @@ PartitionKey GPDBRelationRetrievePartitionKey(Relation rel);
 
 bool TestexprIsHashable(Node *testexpr, List *param_ids);
 
+bool WalkQueryTree(Query *query, bool (*walker)(), void *context, int flags);
+
 }  //namespace gpdb
 
 #define ForEach(cell, l) \

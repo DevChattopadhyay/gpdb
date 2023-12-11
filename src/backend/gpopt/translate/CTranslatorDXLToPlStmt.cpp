@@ -104,6 +104,7 @@ extern "C" {
 #include "naucrates/md/IMDTypeBool.h"
 #include "naucrates/md/IMDTypeInt4.h"
 #include "naucrates/traceflags/traceflags.h"
+#include "nodes/nodeFuncs.h"
 
 using namespace gpdxl;
 using namespace gpos;
@@ -605,7 +606,6 @@ CTranslatorDXLToPlStmt::TranslateJoinPruneParamids(
 	return join_prune_paramids;
 }
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToPlStmt::TranslateDXLTblScan
@@ -633,9 +633,9 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 
 	// Lock any table we are to scan, since it may not have been properly locked
 	// by the parser (e.g in case of generated scans for partitioned tables)
-	CMDIdGPDB *mdid = CMDIdGPDB::CastMdid(md_rel->MDId());
+	OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
 	GPOS_ASSERT(dxl_table_descr->LockMode() != -1);
-	gpdb::GPDBLockRelationOid(mdid->Oid(), dxl_table_descr->LockMode());
+	gpdb::GPDBLockRelationOid(oidRel, dxl_table_descr->LockMode());
 
 	Index index = ProcessDXLTblDescr(dxl_table_descr, &base_table_context);
 
@@ -648,19 +648,29 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 
 	List *targetlist = NIL;
 	List *qual = NIL;
+	List *query_qual = NIL;
+
+	AddSecurityQuals(oidRel, &qual, &index);
 
 	TranslateProjListAndFilter(
 		project_list_dxlnode, filter_dxlnode,
 		&base_table_context,  // translate context for the base table
 		nullptr,			  // translate_ctxt_left and pdxltrctxRight,
-		&targetlist, &qual, output_context);
+		&targetlist, &query_qual, output_context);
+
+	// Appending query quals to the qual list used in the planned statement
+	ListCell *lc;
+	foreach (lc, query_qual)
+	{
+		Expr *expr = (Expr *) lfirst(lc);
+		qual = gpdb::LAppend(qual, expr);
+	}
 
 	Plan *plan = nullptr;
 	Plan *plan_return = nullptr;
 
 	if (IMDRelation::ErelstorageForeign == md_rel->RetrieveRelStorageType())
 	{
-		OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
 		RangeTblEntry *rte = m_dxl_to_plstmt_context->GetRTEByIndex(index);
 
 		ForeignScan *foreign_scan =
@@ -676,7 +686,6 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 		seq_scan->scanrelid = index;
 		plan = &(seq_scan->plan);
 		plan_return = (Plan *) seq_scan;
-
 		plan->targetlist = targetlist;
 		plan->qual = qual;
 	}
@@ -4380,6 +4389,11 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan(
 		CMDIdGPDB::CastMdid(m_md_accessor->PtMDType<IMDTypeInt4>()->MDId())
 			->Oid();
 
+	const IMDRelation *md_rel =
+		m_md_accessor->RetrieveRel(dxl_table_descr->MDId());
+
+	OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
+
 	dyn_seq_scan->join_prune_paramids =
 		TranslateJoinPruneParamids(dyn_tbl_scan_dxlop->GetSelectorIds(),
 								   oid_type, m_dxl_to_plstmt_context);
@@ -4398,11 +4412,26 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan(
 		(*dyn_tbl_scan_dxlnode)[EdxltsIndexProjList];
 	CDXLNode *filter_dxlnode = (*dyn_tbl_scan_dxlnode)[EdxltsIndexFilter];
 
+	List *qual = NIL;
+	List *query_qual = NIL;
+
+	AddSecurityQuals(oidRel, &qual, &index);
+
 	TranslateProjListAndFilter(
 		project_list_dxlnode, filter_dxlnode,
 		&base_table_context,  // translate context for the base table
 		nullptr,			  // translate_ctxt_left and pdxltrctxRight,
-		&plan->targetlist, &plan->qual, output_context);
+		&plan->targetlist, &query_qual, output_context);
+
+	// Appending query quals to the qual list used in the planned statement
+	ListCell *lc;
+	foreach (lc, query_qual)
+	{
+		Expr *expr = (Expr *) lfirst(lc);
+		qual = gpdb::LAppend(qual, expr);
+	}
+
+	plan->qual = qual;
 
 	SetParamIds(plan);
 
@@ -4665,11 +4694,23 @@ CTranslatorDXLToPlStmt::TranslateDXLDynForeignScan(
 
 	List *targetlist = NIL;
 	List *qual = NIL;
+	List *query_qual = NIL;
+
+	AddSecurityQuals(oid_root, &qual, &index);
+
 	TranslateProjListAndFilter(
 		project_list_dxlnode, filter_dxlnode,
 		&base_table_context,  // translate context for the base table
 		nullptr,			  // translate_ctxt_left and pdxltrctxRight,
-		&targetlist, &qual, output_context);
+		&targetlist, &query_qual, output_context);
+
+	// Appending query quals to the qual list used in the planned statement
+	ListCell *lc;
+	foreach (lc, query_qual)
+	{
+		Expr *expr = (Expr *) lfirst(lc);
+		qual = gpdb::LAppend(qual, expr);
+	}
 
 	// set the rte relid to the child, since we need to call the fdw api
 	// which assumes we're working with a foreign table. The root partition is
@@ -5824,6 +5865,126 @@ CTranslatorDXLToPlStmt::TranslateProjListAndFilter(
 		child_contexts, output_context);
 }
 
+
+
+//---------------------------------------------------------------------------
+//	@function:
+//		CTranslatorDXLToPlStmt::AddSecurityQuals
+//
+//	@doc:
+//		Given the OID of a relation, fetches its security quals and
+//		append it to the qual list
+//
+//---------------------------------------------------------------------------
+
+BOOL
+CTranslatorDXLToPlStmt::SetSecurityQualsVarnoWalker(Node *node,  Index* index)
+{
+	if (nullptr == node)
+	{
+		return false;
+	}
+
+	if (IsA(node, Var))
+	{
+		((Var *) node)->varno = *index;
+		return false;
+	}
+
+	return gpdb::WalkExpressionTree(
+		node, (BOOL(*)()) CTranslatorDXLToPlStmt::SetSecurityQualsVarnoWalker,
+		index);
+}
+
+void CTranslatorDXLToPlStmt::AddSecurityQuals(OID relId,List **qual,Index *index)
+{
+	SContextSecurityQuals ctxt_security_quals(relId);
+	FetchSecurityQuals(m_dxl_to_plstmt_context->m_orig_query,&ctxt_security_quals);
+	SetSecurityQualsVarnoWalker((Node*)ctxt_security_quals.m_security_quals, index);
+
+	ListCell *l;
+	foreach (l, ctxt_security_quals.m_security_quals)
+	{
+		Expr *expr = (Expr *) lfirst(l);
+		*qual = gpdb::LAppend(*qual, expr);
+	}
+}
+
+void
+CTranslatorDXLToPlStmt::FetchSecurityQuals(Query *parsetree, SContextSecurityQuals *ctxt_security_quals)
+{
+	ListCell   *lc;
+
+	foreach(lc, parsetree->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		if (RTE_RELATION == rte->rtekind && rte->relid == ctxt_security_quals->m_relId)
+		{
+			ListCell *l;
+			foreach (l, rte->securityQuals)
+			{
+				Expr *expr = (Expr *) lfirst(l);
+				ctxt_security_quals->m_security_quals = gpdb::LAppend(ctxt_security_quals->m_security_quals, expr);
+			}
+			return;
+		}
+
+		if (RTE_SUBQUERY == rte->rtekind || RTE_TABLEFUNCTION == rte->rtekind)
+		{
+			FetchSecurityQuals(rte->subquery, ctxt_security_quals);
+			if (0 < gpdb::ListLength(ctxt_security_quals->m_security_quals))
+			{
+				return;
+			}
+		}
+	}
+
+
+	// Recurse into ctelist
+	foreach(lc, parsetree->cteList)
+	{
+		CommonTableExpr *cte = lfirst_node(CommonTableExpr, lc);
+
+		FetchSecurityQuals(castNode(Query, cte->ctequery), ctxt_security_quals);
+		if (0 < gpdb::ListLength(ctxt_security_quals->m_security_quals))
+		{
+			return;
+		}
+	}
+
+
+	// Recurse into sublink subqueries
+	if (parsetree->hasSubLinks)
+	{
+		gpdb::WalkQueryTree(parsetree, (BOOL(*)()) CTranslatorDXLToPlStmt::FetchSecurityQualsWalker,
+							ctxt_security_quals, QTW_IGNORE_RC_SUBQUERIES);
+	}
+}
+
+BOOL
+CTranslatorDXLToPlStmt::FetchSecurityQualsWalker(Node *node, SContextSecurityQuals *ctxt_security_quals)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, SubLink))
+	{
+		SubLink    *sub = (SubLink *) node;
+
+		FetchSecurityQuals(castNode(Query, sub->subselect), ctxt_security_quals);
+		if(0 < gpdb::ListLength(ctxt_security_quals->m_security_quals))
+		{
+			return true;
+		}
+
+	}
+
+
+	// Do not recurse into Query nodes
+	return gpdb::WalkExpressionTree(
+		node, (BOOL(*)()) CTranslatorDXLToPlStmt::FetchSecurityQualsWalker,
+		ctxt_security_quals);
+}
 
 //---------------------------------------------------------------------------
 //	@function:

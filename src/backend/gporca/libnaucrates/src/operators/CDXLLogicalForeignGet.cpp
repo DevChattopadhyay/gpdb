@@ -32,6 +32,21 @@ CDXLLogicalForeignGet::CDXLLogicalForeignGet(CMemoryPool *mp,
 
 //---------------------------------------------------------------------------
 //	@function:
+//		CDXLLogicalForeignGet::CDXLLogicalForeignGet
+//
+//	@doc:
+//		Ctor
+//
+//---------------------------------------------------------------------------
+CDXLLogicalForeignGet::CDXLLogicalForeignGet(CMemoryPool *mp,
+											 CDXLTableDescr *table_descr,
+											 BOOL security_quals_present)
+	: CDXLLogicalGet(mp, table_descr, security_quals_present)
+{
+}
+
+//---------------------------------------------------------------------------
+//	@function:
 //		CDXLLogicalForeignGet::GetDXLOperator
 //
 //	@doc:

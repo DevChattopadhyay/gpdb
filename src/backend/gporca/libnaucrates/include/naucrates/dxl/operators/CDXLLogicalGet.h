@@ -35,11 +35,17 @@ private:
 	// table descriptor for the scanned table
 	CDXLTableDescr *m_dxl_table_descr;
 
+	BOOL m_security_quals_present{false};
+
 public:
 	CDXLLogicalGet(CDXLLogicalGet &) = delete;
 
 	// ctor
 	CDXLLogicalGet(CMemoryPool *mp, CDXLTableDescr *table_descr);
+
+	CDXLLogicalGet(CMemoryPool *mp, CDXLTableDescr *table_descr,
+				   BOOL security_quals_present);
+
 
 	// dtor
 	~CDXLLogicalGet() override;
@@ -48,6 +54,7 @@ public:
 	Edxlopid GetDXLOperator() const override;
 	const CWStringConst *GetOpNameStr() const override;
 	CDXLTableDescr *GetDXLTableDescr() const;
+	BOOL SecurityQualsPresent() const;
 
 	// serialize operator in DXL format
 	void SerializeToDXL(CXMLSerializer *xml_serializer,

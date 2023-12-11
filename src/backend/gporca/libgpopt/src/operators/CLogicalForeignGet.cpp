@@ -46,8 +46,9 @@ CLogicalForeignGet::CLogicalForeignGet(CMemoryPool *mp) : CLogicalGet(mp)
 //
 //---------------------------------------------------------------------------
 CLogicalForeignGet::CLogicalForeignGet(CMemoryPool *mp, const CName *pnameAlias,
-									   CTableDescriptor *ptabdesc)
-	: CLogicalGet(mp, pnameAlias, ptabdesc)
+									   CTableDescriptor *ptabdesc,
+									   BOOL security_quals_present)
+	: CLogicalGet(mp, pnameAlias, ptabdesc, security_quals_present)
 {
 }
 
@@ -61,8 +62,10 @@ CLogicalForeignGet::CLogicalForeignGet(CMemoryPool *mp, const CName *pnameAlias,
 //---------------------------------------------------------------------------
 CLogicalForeignGet::CLogicalForeignGet(CMemoryPool *mp, const CName *pnameAlias,
 									   CTableDescriptor *ptabdesc,
-									   CColRefArray *pdrgpcrOutput)
-	: CLogicalGet(mp, pnameAlias, ptabdesc, pdrgpcrOutput)
+									   CColRefArray *pdrgpcrOutput,
+									   BOOL security_quals_present)
+	: CLogicalGet(mp, pnameAlias, ptabdesc, pdrgpcrOutput,
+				  security_quals_present)
 {
 }
 
@@ -84,7 +87,8 @@ CLogicalForeignGet::Matches(COperator *pop) const
 	CLogicalForeignGet *popGet = CLogicalForeignGet::PopConvert(pop);
 
 	return Ptabdesc() == popGet->Ptabdesc() &&
-		   PdrgpcrOutput()->Equals(popGet->PdrgpcrOutput());
+		   PdrgpcrOutput()->Equals(popGet->PdrgpcrOutput()) &&
+		   SecurityQualsPresent() == popGet->SecurityQualsPresent();
 }
 
 //---------------------------------------------------------------------------
@@ -117,7 +121,7 @@ CLogicalForeignGet::PopCopyWithRemappedColumns(CMemoryPool *mp,
 	ptabdesc->AddRef();
 
 	return GPOS_NEW(mp)
-		CLogicalForeignGet(mp, pnameAlias, ptabdesc, pdrgpcrOutput);
+		CLogicalForeignGet(mp, pnameAlias, ptabdesc, pdrgpcrOutput,SecurityQualsPresent());
 }
 
 //---------------------------------------------------------------------------

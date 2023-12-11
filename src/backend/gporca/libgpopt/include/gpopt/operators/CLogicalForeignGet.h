@@ -40,10 +40,11 @@ public:
 	explicit CLogicalForeignGet(CMemoryPool *mp);
 
 	CLogicalForeignGet(CMemoryPool *mp, const CName *pnameAlias,
-					   CTableDescriptor *ptabdesc);
+					   CTableDescriptor *ptabdesc, BOOL security_quals_present = false);
 
 	CLogicalForeignGet(CMemoryPool *mp, const CName *pnameAlias,
-					   CTableDescriptor *ptabdesc, CColRefArray *pdrgpcrOutput);
+					   CTableDescriptor *ptabdesc, CColRefArray *pdrgpcrOutput,
+					   BOOL security_quals_present = false);
 
 	// ident accessors
 	EOperatorId

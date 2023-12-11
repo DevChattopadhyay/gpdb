@@ -579,6 +579,9 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 	CDXLTableDescr *table_descr =
 		CDXLLogicalGet::Cast(dxl_op)->GetDXLTableDescr();
 
+	BOOL securityQualsPresent =
+		CDXLLogicalGet::Cast(dxl_op)->SecurityQualsPresent();
+
 	GPOS_ASSERT(nullptr != table_descr);
 	GPOS_ASSERT(nullptr != table_descr->MdName()->GetMDName());
 
@@ -634,7 +637,7 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 		partition_mdids->AddRef();
 		popGet = GPOS_NEW(m_mp)
 			CLogicalDynamicGet(m_mp, pname, ptabdesc, part_idx_id,
-							   partition_mdids, foreign_server_mdids);
+							   partition_mdids, foreign_server_mdids,securityQualsPresent);
 		CLogicalDynamicGet *popDynamicGet =
 			CLogicalDynamicGet::PopConvert(popGet);
 
@@ -645,12 +648,14 @@ CTranslatorDXLToExpr::PexprLogicalGet(const CDXLNode *dxlnode)
 	{
 		if (EdxlopLogicalGet == edxlopid)
 		{
-			popGet = GPOS_NEW(m_mp) CLogicalGet(m_mp, pname, ptabdesc);
+			popGet = GPOS_NEW(m_mp)
+				CLogicalGet(m_mp, pname, ptabdesc, securityQualsPresent);
 		}
 		else
 		{
 			GPOS_ASSERT(EdxlopLogicalForeignGet == edxlopid);
-			popGet = GPOS_NEW(m_mp) CLogicalForeignGet(m_mp, pname, ptabdesc);
+			popGet = GPOS_NEW(m_mp)
+				CLogicalForeignGet(m_mp, pname, ptabdesc, securityQualsPresent);
 		}
 
 		// get the output column references

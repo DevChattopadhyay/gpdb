@@ -57,13 +57,15 @@ CLogicalGet::CLogicalGet(CMemoryPool *mp)
 //
 //---------------------------------------------------------------------------
 CLogicalGet::CLogicalGet(CMemoryPool *mp, const CName *pnameAlias,
-						 CTableDescriptor *ptabdesc)
+						 CTableDescriptor *ptabdesc,
+						 BOOL security_quals_present)
 	: CLogical(mp),
 	  m_pnameAlias(pnameAlias),
 	  m_ptabdesc(ptabdesc),
 	  m_pdrgpcrOutput(nullptr),
 	  m_pdrgpdrgpcrPart(nullptr),
-	  m_pcrsDist(nullptr)
+	  m_pcrsDist(nullptr),
+	  m_security_quals_present(security_quals_present)
 {
 	GPOS_ASSERT(nullptr != ptabdesc);
 	GPOS_ASSERT(nullptr != pnameAlias);
@@ -91,12 +93,14 @@ CLogicalGet::CLogicalGet(CMemoryPool *mp, const CName *pnameAlias,
 //---------------------------------------------------------------------------
 CLogicalGet::CLogicalGet(CMemoryPool *mp, const CName *pnameAlias,
 						 CTableDescriptor *ptabdesc,
-						 CColRefArray *pdrgpcrOutput)
+						 CColRefArray *pdrgpcrOutput,
+						 BOOL security_quals_present)
 	: CLogical(mp),
 	  m_pnameAlias(pnameAlias),
 	  m_ptabdesc(ptabdesc),
 	  m_pdrgpcrOutput(pdrgpcrOutput),
-	  m_pdrgpdrgpcrPart(nullptr)
+	  m_pdrgpdrgpcrPart(nullptr),
+	  m_security_quals_present(security_quals_present)
 {
 	GPOS_ASSERT(nullptr != ptabdesc);
 	GPOS_ASSERT(nullptr != pnameAlias);
@@ -145,6 +149,8 @@ CLogicalGet::HashValue() const
 	ulHash =
 		gpos::CombineHashes(ulHash, CUtils::UlHashColArray(m_pdrgpcrOutput));
 
+	ulHash = gpos::CombineHashes(ulHash, gpos::HashValue<BOOL>(&m_security_quals_present));
+
 	return ulHash;
 }
 
@@ -167,7 +173,8 @@ CLogicalGet::Matches(COperator *pop) const
 	CLogicalGet *popGet = CLogicalGet::PopConvert(pop);
 
 	return m_ptabdesc->MDId()->Equals(popGet->m_ptabdesc->MDId()) &&
-		   m_pdrgpcrOutput->Equals(popGet->PdrgpcrOutput());
+		   m_pdrgpcrOutput->Equals(popGet->PdrgpcrOutput()) &&
+		   m_security_quals_present == popGet->SecurityQualsPresent();
 }
 
 //---------------------------------------------------------------------------
@@ -197,7 +204,8 @@ CLogicalGet::PopCopyWithRemappedColumns(CMemoryPool *mp,
 	CName *pnameAlias = GPOS_NEW(mp) CName(mp, *m_pnameAlias);
 	m_ptabdesc->AddRef();
 
-	return GPOS_NEW(mp) CLogicalGet(mp, pnameAlias, m_ptabdesc, pdrgpcrOutput);
+	return GPOS_NEW(mp) CLogicalGet(mp, pnameAlias, m_ptabdesc, pdrgpcrOutput,
+									m_security_quals_present);
 }
 
 //---------------------------------------------------------------------------

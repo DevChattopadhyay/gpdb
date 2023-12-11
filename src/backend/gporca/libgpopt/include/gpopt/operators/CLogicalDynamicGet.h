@@ -42,6 +42,8 @@ protected:
 	// Indexes correspond to partitions
 	IMdIdArray *m_foreign_server_mdids{nullptr};
 
+	BOOL m_security_quals_present{false};
+
 public:
 	CLogicalDynamicGet(const CLogicalDynamicGet &) = delete;
 
@@ -54,11 +56,11 @@ public:
 					   CColRef2dArray *pdrgpdrgpcrPart,
 					   IMdIdArray *partition_mdids,
 					   CConstraint *partition_cnstrs_disj, BOOL static_pruned,
-					   IMdIdArray *foreign_server_mdids);
+					   IMdIdArray *foreign_server_mdids,BOOL security_quals_present = false);
 	CLogicalDynamicGet(CMemoryPool *mp, const CName *pnameAlias,
 					   CTableDescriptor *ptabdesc, ULONG ulPartIndex,
 					   IMdIdArray *partition_mdids,
-					   IMdIdArray *foreign_server_mdids);
+					   IMdIdArray *foreign_server_mdids,BOOL security_quals_present = false);
 
 	// dtor
 	~CLogicalDynamicGet() override;
@@ -89,6 +91,12 @@ public:
 	FStaticPruned() const
 	{
 		return m_static_pruned;
+	}
+
+	BOOL
+	SecurityQualsPresent() const
+	{
+		return m_security_quals_present;
 	}
 
 	// operator specific hash function

@@ -106,6 +106,20 @@ private:
 		}
 	};	// SContextIndexVarAttno
 
+	// context for finding security quals
+	struct SContextSecurityQuals
+	{
+		const OID m_relId;
+
+		List * m_security_quals{NIL};
+
+		// ctor
+		SContextSecurityQuals(const OID relId)
+			: m_relId(relId)
+		{
+		}
+	};	// SContextSecurityQuals
+
 	// memory pool
 	CMemoryPool *m_mp;
 
@@ -141,6 +155,14 @@ private:
 
 	// walker to set inner var to outer
 	static BOOL SetHashKeysVarnoWalker(Node *node, void *context);
+
+	static BOOL FetchSecurityQualsWalker(Node *node,
+								SContextSecurityQuals *ctxt_security_quals);
+
+	static void FetchSecurityQuals(Query *parsetree,
+								 SContextSecurityQuals *ctxt_security_quals);
+	static BOOL
+	SetSecurityQualsVarnoWalker(Node *node,  Index* index);
 
 public:
 	// ctor
@@ -499,6 +521,8 @@ private:
 		const CDXLTranslateContextBaseTable *base_table_context,
 		CDXLTranslationContextArray *child_contexts, List **targetlist_out,
 		List **qual_out, CDXLTranslateContext *output_context);
+
+	void AddSecurityQuals(OID relId,List **qual,Index *index);
 
 	// translate the hash expr list of a redistribute motion node
 	void TranslateHashExprList(const CDXLNode *hash_expr_list_dxlnode,

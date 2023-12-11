@@ -2509,8 +2509,13 @@ CXformUtils::PexprBuildBtreeIndexPlan(CMemoryPool *mp, CMDAccessor *md_accessor,
 	//
 	// Both (1) and (2) doesn't apply if index is used for ORDER BY. Because
 	// a query with just order by doesn't have index-able predicates.
-	if ((0 == pdrgpexprIndex->Size() || outer_refs_in_index_get->Size() == 0) &&
-		!indexForOrderBy)
+	if (((0 == pdrgpexprIndex->Size() ||
+		  outer_refs_in_index_get->Size() == 0) &&
+		 !indexForOrderBy) ||
+		(CLogical::EopLogicalGet == op_id &&
+		 CLogicalGet::PopConvert(pexprGet->Pop())->SecurityQualsPresent()) ||
+		(fDynamicGet && CLogicalDynamicGet::PopConvert(pexprGet->Pop())
+							->SecurityQualsPresent()))
 	{
 		// clean up
 		GPOS_DELETE(alias);
@@ -2521,6 +2526,8 @@ CXformUtils::PexprBuildBtreeIndexPlan(CMemoryPool *mp, CMDAccessor *md_accessor,
 
 		return nullptr;
 	}
+
+
 
 	// most GiST indexes are lossy, so conservatively re-add all the index quals to the residual so that they can be rechecked
 	if (pmdindex->IndexType() == IMDIndex::EmdindGist)
@@ -3434,6 +3441,16 @@ CXformUtils::PexprBitmapTableGet(CMemoryPool *mp, CLogical *popGet,
 		&pexprResidual, false /*isAPartialPredicate*/
 	);
 	CExpression *pexprResult = nullptr;
+
+	if (nullptr != pexprBitmap &&
+		((CLogical::EopLogicalGet == popGet->Eopid() &&
+		  (dynamic_cast<CLogicalGet *>(popGet))->SecurityQualsPresent()) ||
+		 (fDynamicGet &&
+		  (dynamic_cast<CLogicalDynamicGet *>(popGet))->SecurityQualsPresent())))
+	{
+		pdrgpexpr->Release();
+		return pexprResult;
+	}
 
 	if (nullptr != pexprBitmap)
 	{

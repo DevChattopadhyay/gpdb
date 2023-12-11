@@ -36,6 +36,9 @@ public:
 	// ctor
 	CDXLLogicalForeignGet(CMemoryPool *mp, CDXLTableDescr *table_descr);
 
+	CDXLLogicalForeignGet(CMemoryPool *mp, CDXLTableDescr *table_descr,
+						  BOOL security_quals_present);
+
 	// operator type
 	Edxlopid GetDXLOperator() const override;
 

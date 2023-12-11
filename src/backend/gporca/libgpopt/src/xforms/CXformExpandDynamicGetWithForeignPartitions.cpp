@@ -85,6 +85,7 @@ CXformExpandDynamicGetWithForeignPartitions::Transform(CXformContext *pxfctxt,
 
 	IMdIdArray *foreign_server_mdids = popGet->ForeignServerMdIds();
 	IMdIdArray *all_part_mdids = popGet->GetPartitionMdids();
+	BOOL security_quals_present = popGet->SecurityQualsPresent();
 
 	IMdIdArray *non_foreign_parts = GPOS_NEW(mp) IMdIdArray(mp);
 	// create map from server-> (array of part mdids)
@@ -165,7 +166,7 @@ CXformExpandDynamicGetWithForeignPartitions::Transform(CXformContext *pxfctxt,
 				mp, new_alias, popGet->Ptabdesc(), popGet->ScanId(), pdrgpcrNew,
 				popGet->PdrgpdrgpcrPart(), non_foreign_parts,
 				popGet->GetPartitionConstraintsDisj(), popGet->FStaticPruned(),
-				GPOS_NEW(mp) IMdIdArray(mp) /* foreign_server_mdids */);
+				GPOS_NEW(mp) IMdIdArray(mp) /* foreign_server_mdids */,security_quals_present);
 		CExpression *pexprNonForeignDynamicGet =
 			GPOS_NEW(mp) CExpression(mp, nonForeignDynamicGet);
 

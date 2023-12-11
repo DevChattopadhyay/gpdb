@@ -34,6 +34,22 @@ CDXLLogicalGet::CDXLLogicalGet(CMemoryPool *mp, CDXLTableDescr *table_descr)
 
 //---------------------------------------------------------------------------
 //	@function:
+//		CDXLLogicalGet::CDXLLogicalGet
+//
+//	@doc:
+//		Construct a logical get operator node given its table descriptor rtable entry
+//
+//---------------------------------------------------------------------------
+CDXLLogicalGet::CDXLLogicalGet(CMemoryPool *mp, CDXLTableDescr *table_descr,
+							   BOOL security_quals_present)
+	: CDXLLogical(mp),
+	  m_dxl_table_descr(table_descr),
+	  m_security_quals_present{security_quals_present}
+{
+}
+
+//---------------------------------------------------------------------------
+//	@function:
 //		CDXLLogicalGet::~CDXLLogicalGet
 //
 //	@doc:
@@ -106,6 +122,9 @@ CDXLLogicalGet::SerializeToDXL(CXMLSerializer *xml_serializer,
 	xml_serializer->OpenElement(
 		CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix), element_name);
 
+	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenSecurityQuals),
+								 m_security_quals_present);
+
 	// serialize table descriptor
 	m_dxl_table_descr->SerializeToDXL(xml_serializer);
 
@@ -135,6 +154,12 @@ CDXLLogicalGet::IsColDefined(ULONG colid) const
 	}
 
 	return false;
+}
+
+BOOL
+CDXLLogicalGet::SecurityQualsPresent() const
+{
+	return m_security_quals_present;
 }
 
 #ifdef GPOS_DEBUG

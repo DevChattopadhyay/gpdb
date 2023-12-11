@@ -415,6 +415,8 @@ CDXLTokens::Init(CMemoryPool *mp)
 		{EdxltokenTableOidColName, GPOS_WSZ_LIT("tableoid")},
 		{EdxltokenGpSegmentIdColName, GPOS_WSZ_LIT("gp_segment_id")},
 
+		{EdxltokenSecurityQuals, GPOS_WSZ_LIT("SecurityQuals")},
+
 		{EdxltokenActionColId, GPOS_WSZ_LIT("ActionCol")},
 		{EdxltokenCtidColId, GPOS_WSZ_LIT("CtidCol")},
 		{EdxltokenGpSegmentIdColId, GPOS_WSZ_LIT("SegmentIdCol")},
