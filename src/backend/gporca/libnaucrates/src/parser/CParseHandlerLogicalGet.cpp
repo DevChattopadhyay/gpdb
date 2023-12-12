@@ -60,7 +60,7 @@ CParseHandlerLogicalGet::StartElement(const XMLCh *const element_local_name,
 
 	m_security_quals_present = CDXLOperatorFactory::ExtractConvertAttrValueToBool(
 		m_parse_handler_mgr->GetDXLMemoryManager(), attr, EdxltokenSecurityQuals,
-		token_type);
+		token_type,true,false);
 
 	// create child node parsers
 
