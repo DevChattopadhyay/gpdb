@@ -140,7 +140,20 @@ CLogicalDynamicGet::HashValue() const
 BOOL
 CLogicalDynamicGet::Matches(COperator *pop) const
 {
-	return CUtils::FMatchDynamicScan(this, pop);
+//	return CUtils::FMatchDynamicScan(this, pop);
+
+	if (this->Eopid() != pop->Eopid())
+	{
+		return false;
+	}
+
+	CLogicalDynamicGet *popGet = CLogicalDynamicGet::PopConvert(pop);
+
+	// match if the table descriptors are identical
+	return this->ScanId() == popGet->ScanId() &&
+		   this->Ptabdesc()->MDId()->Equals(popGet->Ptabdesc()->MDId()) &&
+		   this->PdrgpcrOutput()->Equals(popGet->PdrgpcrOutput()) &&
+		   this->SecurityQualsPresent() == popGet->SecurityQualsPresent();
 }
 
 //---------------------------------------------------------------------------
