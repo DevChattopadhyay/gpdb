@@ -51,6 +51,8 @@ extern "C" {
 #include "naucrates/md/IMDTypeInt4.h"
 #include "naucrates/traceflags/traceflags.h"
 
+#include "nodes/nodeFuncs.h"
+
 using namespace gpdxl;
 using namespace gpos;
 using namespace gpopt;
@@ -216,6 +218,8 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL(const CDXLNode *dxlnode,
 	GPOS_ASSERT(NULL != dxlnode);
 
 	CDXLTranslateContext dxl_translate_ctxt(m_mp, false, orig_query);
+
+	m_dxl_to_plstmt_context->m_orig_query = (Query *) orig_query;
 
 	CDXLTranslationContextArray *ctxt_translation_prev_siblings =
 		GPOS_NEW(m_mp) CDXLTranslationContextArray(m_mp);
@@ -3937,6 +3941,14 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan(
 	CDXLPhysicalDynamicTableScan *dyn_tbl_scan_dxlop =
 		CDXLPhysicalDynamicTableScan::Cast(dyn_tbl_scan_dxlnode->GetOperator());
 
+	const CDXLTableDescr *dxl_table_descr =
+		dyn_tbl_scan_dxlop->GetDXLTableDescr();
+
+	const IMDRelation *md_rel =
+		m_md_accessor->RetrieveRel(dxl_table_descr->MDId());
+
+	OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
+
 	// translation context for column mappings in the base relation
 	CDXLTranslateContextBaseTable base_table_context(m_mp);
 
@@ -3950,6 +3962,16 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan(
 	rte->requiredPerms |= ACL_SELECT;
 
 	m_dxl_to_plstmt_context->AddRTE(rte);
+
+	Relation rel = gpdb::GetRelation(oidRel);
+
+	if (GPOS_FTRACE(EopttraceKeepPartitionChildrenLocks) &&
+		RelationIsAppendOptimized(rel))
+	{
+		AcquireLocksChildAOPart(m_dxl_to_plstmt_context->m_orig_query, oidRel);
+	}
+
+	gpdb::CloseRelation(rel);
 
 	// create dynamic scan node
 	DynamicSeqScan *dyn_seq_scan = MakeNode(DynamicSeqScan);
@@ -3986,6 +4008,91 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan(
 	SetParamIds(plan);
 
 	return (Plan *) dyn_seq_scan;
+}
+
+void
+CTranslatorDXLToPlStmt::AcquireLocksChildAOPart(Query *parsetree, OID oidRel)
+{
+	ListCell *lc;
+	int rt_index;
+
+	// First, process RTEs of the current query level.
+	rt_index = 0;
+	foreach (lc, parsetree->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		LOCKMODE lockmode;
+
+		rt_index++;
+		switch (rte->rtekind)
+		{
+			case RTE_RELATION:
+				if (rte->relid == oidRel &&
+					rt_index == parsetree->resultRelation)
+				{
+					lockmode = RowExclusiveLock;
+				}
+				else if (gpdb::GetParseRowmark(parsetree, rt_index) != NULL)
+				{
+					lockmode = RowShareLock;
+				}
+				else
+				{
+					lockmode = AccessShareLock;
+				}
+
+				gpdb::FindAllInheritors(rte->relid, lockmode, NULL);
+				break;
+
+			case RTE_SUBQUERY:
+				// Recurse into subquery-in-FROM
+				AcquireLocksChildAOPart(rte->subquery, oidRel);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	// Recurse into CTE list
+	foreach (lc, parsetree->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+		AcquireLocksChildAOPart((Query *) cte->ctequery, oidRel);
+	}
+
+	// Recurse into sublink subqueries, too.  But we already did the ones in
+	// the rtable and cteList.
+	if (parsetree->hasSubLinks)
+	{
+		gpdb::WalkQueryTree(
+			parsetree,
+			(BOOL(*)()) CTranslatorDXLToPlStmt::AcquireLocksChildAOPartWalker,
+			(void *) &oidRel, QTW_IGNORE_RC_SUBQUERIES);
+	}
+}
+
+BOOL
+CTranslatorDXLToPlStmt::AcquireLocksChildAOPartWalker(Node *node, OID *oidRel)
+{
+	if (NULL == node)
+	{
+		return false;
+	}
+
+	if (IsA(node, SubLink))
+	{
+		SubLink *sub = (SubLink *) node;
+
+		AcquireLocksChildAOPart((Query *) sub->subselect, *oidRel);
+	}
+
+	// No need to recurse into Query nodes, because AcquireLocksChildAOPart already
+	// processed subselects of subselects for us.
+	return gpdb::WalkExpressionTree(
+		node, (BOOL(*)()) CTranslatorDXLToPlStmt::AcquireLocksChildAOPartWalker,
+		(void *) oidRel);
 }
 
 //---------------------------------------------------------------------------

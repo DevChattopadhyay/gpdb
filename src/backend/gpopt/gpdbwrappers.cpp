@@ -2735,4 +2735,37 @@ gpdb::IsTypeRange(Oid typid)
 	return false;
 }
 
+RowMarkClause *
+gpdb::GetParseRowmark(Query *query, Index rtindex)
+{
+	GP_WRAP_START;
+	{
+		get_parse_rowmark(query, rtindex);
+	}
+	GP_WRAP_END;
+	return nullptr;
+}
+
+List *
+gpdb::FindAllInheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
+{
+	GP_WRAP_START;
+	{
+		find_all_inheritors(parentrelId, lockmode, numparents);
+	}
+	GP_WRAP_END;
+	return nullptr;
+}
+
+gpos::BOOL
+gpdb::WalkQueryTree(Query *query, bool (*walker)(), void *context, int flags)
+{
+	GP_WRAP_START;
+	{
+		return query_tree_walker(query, walker, context, flags);
+	}
+	GP_WRAP_END;
+	return false;
+}
+
 // EOF

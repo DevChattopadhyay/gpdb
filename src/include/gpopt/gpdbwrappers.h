@@ -19,6 +19,7 @@ extern "C" {
 #include "postgres.h"
 
 #include "access/attnum.h"
+#include "catalog/pg_inherits_fn.h"
 #include "nodes/plannodes.h"
 #include "parser/parse_coerce.h"
 #include "utils/faultinjector.h"
@@ -709,6 +710,13 @@ MemoryContext GPDBAllocSetContextCreate();
 void GPDBMemoryContextDelete(MemoryContext context);
 
 bool IsTypeRange(Oid typid);
+
+RowMarkClause *GetParseRowmark(Query *query, Index rtindex);
+
+List *FindAllInheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents);
+
+gpos::BOOL WalkQueryTree(Query *query, bool (*walker)(), void *context,
+						 int flags);
 
 }  //namespace gpdb
 

@@ -129,6 +129,8 @@ private:
 	GpPolicy *m_distribution_policy;
 
 public:
+	Query *m_orig_query;
+
 	// ctor/dtor
 	CContextDXLToPlStmt(CMemoryPool *mp, CIdGenerator *plan_id_counter,
 						CIdGenerator *motion_id_counter,
