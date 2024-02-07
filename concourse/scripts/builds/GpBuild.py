@@ -81,6 +81,7 @@ class GpBuild:
         fail_on_error(status)
         
         if branch == 'remote':
+            print("Hello Dev!! I am inside the if statement")
             status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/new_optional_gucs.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
             fail_on_error(status)
 
