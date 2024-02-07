@@ -60,11 +60,11 @@ resources:
 - name: gpdb_main_src  # used for yml task files
   type: git
   source:
-    branch: main
+    branch: gpqp268
     paths:
     - concourse/**
     - src/backend/gporca/concourse/**
-    uri: https://github.com/greenplum-db/gpdb
+    uri: https://github.com/DevChattopadhyay/gpdb
 
 ## resources for workload1
 - name: explain_output_((workload1))_branch
@@ -331,6 +331,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload1))
       NUM_SEGMENTS: 64
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload1))_branch
@@ -365,6 +366,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload1))
       NUM_SEGMENTS: 64
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload1))_baseline
@@ -428,6 +430,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload2))
       NUM_SEGMENTS: 32
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload2))_branch
@@ -462,6 +465,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload2))
       NUM_SEGMENTS: 32
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload2))_baseline
@@ -525,6 +529,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload3))
       NUM_SEGMENTS: 32
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload3))_branch
@@ -559,6 +564,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload3))
       NUM_SEGMENTS: 32
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload3))_baseline
@@ -622,6 +628,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload4))
       NUM_SEGMENTS: 64
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload4))_branch
@@ -656,6 +663,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload4))
       NUM_SEGMENTS: 64
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload4))_baseline
@@ -719,6 +727,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload5))
       NUM_SEGMENTS: 32
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload5))_branch
@@ -753,6 +762,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload5))
       NUM_SEGMENTS: 32
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload5))_baseline
@@ -816,6 +826,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload6))
       NUM_SEGMENTS: 64
+      BRANCH: remote
     on_success:
       try:
         put: explain_output_((workload6))_branch
@@ -850,6 +861,7 @@ jobs:
       MODE: orca
       WORKLOAD: ((workload6))
       NUM_SEGMENTS: 64
+      BRANCH: baseline
     on_success:
       try:
         put: explain_output_((workload6))_baseline
@@ -913,6 +925,7 @@ jobs:
         MODE: orca
         WORKLOAD: ((workload7))
         NUM_SEGMENTS: 24
+        BRANCH: remote
       on_success:
         try:
           put: explain_output_((workload7))_branch
@@ -947,6 +960,7 @@ jobs:
         MODE: orca
         WORKLOAD: ((workload7))
         NUM_SEGMENTS: 24
+        BRANCH: baseline
       on_success:
         try:
           put: explain_output_((workload7))_baseline
