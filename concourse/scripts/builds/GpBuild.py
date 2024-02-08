@@ -81,11 +81,12 @@ class GpBuild:
         if branch == 'baseline':
             print("Hello Dev!! I am baseline")
             status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs_baseline.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
-        fail_on_error(status)
+        
         else:
             print("Hello Dev!! I am remote")
             status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs_remote.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
-            fail_on_error(status)
+        
+        fail_on_error(status)
         print("Hello Dev!! Congrats")
         command = "source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && echo 'optimizer_segments={0}\ngp_segments_for_planner={0}' >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf".format(num_segments)
         print("Running command: " + command)
