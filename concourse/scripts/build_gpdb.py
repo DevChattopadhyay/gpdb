@@ -50,6 +50,7 @@ def main():
     parser.add_option("--action", choices=['build', 'test', 'test_explain_suite'], dest="action", default='build',
                       help="Build GPDB or Run Install Check")
     parser.add_option("--dbexists", dest="dbexists", action="store_true", default=False, help="create new demo cluster")
+    parser.add_option("--branch", dest="branch", default=baseline, help="Branch is remote or baseline")
     (options, args) = parser.parse_args()
 
     gpBuild = GpBuild(options.mode)
@@ -63,7 +64,7 @@ def main():
     else:
         status = extract_explain_test_suite()
         fail_on_error(status)
-    status = gpBuild.run_explain_test_suite(options.dbexists, options.num_segments)
+    status = gpBuild.run_explain_test_suite(options.dbexists, options.num_segments, options.branch)
     fail_on_error(status)
     status = tar_explain_output()
     fail_on_error(status)
