@@ -1,5 +1,6 @@
 import subprocess
 import os
+import time
 
 INSTALL_DIR="/usr/local/greenplum-db-devel"
 
@@ -92,7 +93,7 @@ class GpBuild:
         fail_on_error(status)
         status = self._run_gpdb_command("gpstop -ar")
         fail_on_error(status)
-
+        time.sleep(1200)
         # Now run the queries !!
         os.mkdir('out')
         status = 0
