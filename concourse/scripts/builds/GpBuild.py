@@ -78,12 +78,13 @@ class GpBuild:
                 fail_on_error(status)
 
         # set gucs if any were specified
-        status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
+        if branch == 'baseline'
+            print("Hello Dev!! I am baseline")
+            status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs_baseline.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
         fail_on_error(status)
-
-        if branch == 'remote':
-            print("Hello Dev!! I am inside the if statement")
-            status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/new_optional_gucs.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
+        else:
+            print("Hello Dev!! I am remote")
+            status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs_remote.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
             fail_on_error(status)
         print("Hello Dev!! Congrats")
         command = "source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && echo 'optimizer_segments={0}\ngp_segments_for_planner={0}' >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf".format(num_segments)
