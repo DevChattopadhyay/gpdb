@@ -78,7 +78,7 @@ class GpBuild:
                 fail_on_error(status)
 
         # set gucs if any were specified
-        if branch == 'baseline'
+        if branch == 'baseline':
             print("Hello Dev!! I am baseline")
             status = self._run_cmd("source gpdb_src/gpAux/gpdemo/gpdemo-env.sh && cat gporca-commits-to-test/optional_gucs_baseline.txt >> $COORDINATOR_DATA_DIRECTORY/postgresql.conf", None)
         fail_on_error(status)
