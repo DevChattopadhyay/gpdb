@@ -304,7 +304,10 @@ CConfigParamMapping::SConfigMappingElem CConfigParamMapping::m_elements[] = {
 	{EopttraceDisableInnerNLJ, &optimizer_enable_nljoin,
 	 true,	// m_negate_param
 	 GPOS_WSZ_LIT("Enable nested loop join alternatives")},
-
+	{EopttraceDPEHistogramScaleFactor, &optimizer_dpe_histogram_scale_factor,
+	 false,	 // m_negate_param
+	 GPOS_WSZ_LIT(
+		 "Enable calculating scale factor based on histogram for dynamic sequential scan.")},
 };
 
 //---------------------------------------------------------------------------
