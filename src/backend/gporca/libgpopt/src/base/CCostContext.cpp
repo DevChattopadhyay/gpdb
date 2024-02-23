@@ -663,6 +663,19 @@ CCostContext::CostCompute(CMemoryPool *mp, CCostArray *pdrgpcostChildren)
 
 	DOUBLE num_rebinds = m_pstats->NumRebinds().Get();
 	ci.SetRebinds(num_rebinds);
+
+	COptCtxt *poptctxt = COptCtxt::PoctxtFromTLS();
+	const ULONG ulHosts = poptctxt->GetCostModel()->UlHosts();
+	if (COperator::EopPhysicalFilter == exprhdl.Pop()->Eopid() && exprhdl.HasOuterRefs() &&
+		CDistributionSpec::EdtStrictReplicated == Pdpplan()->Pds()->Edt())
+	{
+		ci.SetRebinds(num_rebinds / ulHosts);
+	}
+	else
+	{
+		ci.SetRebinds(num_rebinds);
+	}
+
 	GPOS_ASSERT_IMP(
 		!exprhdl.HasOuterRefs(),
 		GPOPT_DEFAULT_REBINDS == (ULONG)(num_rebinds) &&
@@ -695,7 +708,15 @@ CCostContext::CostCompute(CMemoryPool *mp, CCostArray *pdrgpcostChildren)
 		ci.SetChildWidth(ul, dWidthChild);
 
 		DOUBLE dRebindsChild = child_stats->NumRebinds().Get();
-		ci.SetChildRebinds(ul, dRebindsChild);
+		if (COperator::EopPhysicalFilter == exprhdl.Pop(ul)->Eopid() && exprhdl.HasOuterRefs(ul) &&
+			CDistributionSpec::EdtStrictReplicated == pccChild->Pdpplan()->Pds()->Edt())
+		{
+			ci.SetChildRebinds(ul,dRebindsChild / ulHosts);
+		}
+		else
+		{
+			ci.SetChildRebinds(ul,dRebindsChild);
+		}
 		GPOS_ASSERT_IMP(
 			!exprhdl.HasOuterRefs(ul),
 			GPOPT_DEFAULT_REBINDS == (ULONG)(dRebindsChild) &&
