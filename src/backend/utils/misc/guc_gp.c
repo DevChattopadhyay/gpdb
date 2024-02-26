@@ -363,6 +363,7 @@ int			optimizer_penalize_broadcast_threshold;
 double		optimizer_cost_threshold;
 double		optimizer_nestloop_factor;
 double		optimizer_sort_factor;
+bool		optimizer_enable_penalize_correlated_nljoin;
 
 /* Optimizer hints */
 int			optimizer_join_arity_for_associativity_commutativity;
@@ -2803,6 +2804,17 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&optimizer_replicated_table_insert,
 		true, NULL, NULL
+	},
+
+	{
+		{"optimizer_enable_penalize_correlated_nljoin", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Penalize correlated NL join"),
+			NULL,
+		GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_penalize_correlated_nljoin,
+		false,
+		NULL, NULL, NULL
 	},
 
 	{

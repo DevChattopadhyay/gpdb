@@ -1375,26 +1375,41 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 
 	CCost costTotal = CCost(costLocal + costChild);
 
-	// amplify NLJ cost based on NLJ factor and stats estimation risk
-	// we don't want to penalize index join compared to nested loop join, so we make sure
-	// that every time index join is penalized, we penalize nested loop join by at least the
-	// same amount
-	CDouble dPenalization = dNLJFactor;
-	const CDouble dRisk(pci->Pcstats()->StatsEstimationRisk());
-	if (dRisk > dPenalization)
-	{
-		const CDouble dIndexJoinAllowedRiskThreshold =
-			pcmgpdb->GetCostModelParams()
-				->PcpLookup(
-					CCostModelParamsGPDB::EcpIndexJoinAllowedRiskThreshold)
-				->Get();
-		if (dIndexJoinAllowedRiskThreshold < dRisk)
-		{
-			dPenalization = dRisk;
-		}
-	}
+	COperator::EOperatorId op_id = exprhdl.Pop()->Eopid();
 
-	return CCost(costTotal * dPenalization);
+	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
+		(COperator::EopPhysicalCorrelatedInnerNLJoin == op_id ||
+		 COperator::EopPhysicalCorrelatedLeftOuterNLJoin == op_id ||
+		 COperator::EopPhysicalCorrelatedLeftSemiNLJoin == op_id ||
+		 COperator::EopPhysicalCorrelatedInLeftSemiNLJoin == op_id ||
+		 COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin == op_id ||
+		 COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin == op_id))
+	{
+		return costTotal;
+	}
+	else
+	{
+		// amplify NLJ cost based on NLJ factor and stats estimation risk
+		// we don't want to penalize index join compared to nested loop join, so we make sure
+		// that every time index join is penalized, we penalize nested loop join by at least the
+		// same amount
+		CDouble dPenalization = dNLJFactor;
+		const CDouble dRisk(pci->Pcstats()->StatsEstimationRisk());
+		if (dRisk > dPenalization)
+		{
+			const CDouble dIndexJoinAllowedRiskThreshold =
+				pcmgpdb->GetCostModelParams()
+					->PcpLookup(
+						CCostModelParamsGPDB::EcpIndexJoinAllowedRiskThreshold)
+					->Get();
+			if (dIndexJoinAllowedRiskThreshold < dRisk)
+			{
+				dPenalization = dRisk;
+			}
+		}
+
+		return CCost(costTotal * dPenalization);
+	}
 }
 
 
