@@ -662,7 +662,32 @@ CCostContext::CostCompute(CMemoryPool *mp, CCostArray *pdrgpcostChildren)
 	ci.SetWidth(width);
 
 	DOUBLE num_rebinds = m_pstats->NumRebinds().Get();
-	ci.SetRebinds(num_rebinds);
+	COptCtxt *poptctxt = COptCtxt::PoctxtFromTLS();
+	const ULONG ulHosts = poptctxt->GetCostModel()->UlHosts();
+
+	// If the expr is a CPhysicalFilter then based on its distribution spec
+	// we need to set the rebinds value.
+	// If the Physical Filter has outer refs, and it's getting executed on a
+	// single segment or coordinator then we don't need to divide the rebinds
+	// by number of segments.
+	// If the Physical Filter has outer refs, and it's getting executed on
+	// multiple segments then we need to divide the rebinds by number of
+	// segments.
+	// Since the minimum rebinds value for an operator is one, we need to also
+	// check that after division by number of segments the rebinds value should
+	// not be less than one.
+	if (COperator::EopPhysicalFilter == exprhdl.Pop()->Eopid() &&
+		exprhdl.HasOuterRefs() &&
+		CDistributionSpec::EdtStrictReplicated == Pdpplan()->Pds()->Edt() &&
+		num_rebinds >= ulHosts)
+	{
+		ci.SetRebinds(num_rebinds / ulHosts);
+	}
+	else
+	{
+		ci.SetRebinds(num_rebinds);
+	}
+
 	GPOS_ASSERT_IMP(
 		!exprhdl.HasOuterRefs(),
 		GPOPT_DEFAULT_REBINDS == (ULONG)(num_rebinds) &&
@@ -695,7 +720,31 @@ CCostContext::CostCompute(CMemoryPool *mp, CCostArray *pdrgpcostChildren)
 		ci.SetChildWidth(ul, dWidthChild);
 
 		DOUBLE dRebindsChild = child_stats->NumRebinds().Get();
-		ci.SetChildRebinds(ul, dRebindsChild);
+
+		// If the child expr is a CPhysicalFilter then based on its
+		// distribution spec we need to set the rebinds value.
+		// If the Physical Filter has outer refs, and it's getting executed
+		// on a single segment or coordinator then we don't need to divide
+		// the rebinds by number of segments.
+		// If the Physical Filter has outer refs, and it's getting executed
+		// on multiple segments then we need to divide the rebinds by number
+		// of segments.
+		// Since the minimum rebinds value for an operator is one, we need to
+		// also check that after division by number of segments the rebinds
+		// value should not be less than one.
+		if (COperator::EopPhysicalFilter == exprhdl.Pop(ul)->Eopid() &&
+			exprhdl.HasOuterRefs(ul) &&
+			CDistributionSpec::EdtStrictReplicated ==
+				pccChild->Pdpplan()->Pds()->Edt() &&
+			num_rebinds >= ulHosts)
+		{
+			ci.SetChildRebinds(ul, dRebindsChild / ulHosts);
+		}
+		else
+		{
+			ci.SetChildRebinds(ul, dRebindsChild);
+		}
+
 		GPOS_ASSERT_IMP(
 			!exprhdl.HasOuterRefs(ul),
 			GPOPT_DEFAULT_REBINDS == (ULONG)(dRebindsChild) &&
