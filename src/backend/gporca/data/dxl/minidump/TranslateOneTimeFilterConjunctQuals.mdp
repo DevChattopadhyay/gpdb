@@ -360,7 +360,7 @@
     <dxl:Plan Id="0" SpaceSize="16">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="1765384.376489" Rows="2.000000" Width="4"/>
+          <dxl:Cost StartupCost="0" TotalCost="1724.008213" Rows="2.000000" Width="4"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="27" Alias="col1">
@@ -371,7 +371,7 @@
         <dxl:SortingColumnList/>
         <dxl:Result>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="1765384.376459" Rows="2.000000" Width="4"/>
+            <dxl:Cost StartupCost="0" TotalCost="1724.008183" Rows="2.000000" Width="4"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="27" Alias="col1">
@@ -396,7 +396,7 @@
                         <dxl:Cast TypeMdid="0.701.1.0" FuncId="0.316.1.0">
                           <dxl:Ident ColId="1" ColName="b" TypeMdid="0.23.1.0"/>
                         </dxl:Cast>
-                        <dxl:FuncExpr FuncId="0.1598.1.0" FuncRetSet="false" TypeMdid="0.701.1.0"/>
+                        <dxl:FuncExpr FuncId="0.1598.1.0" FuncRetSet="false" TypeMdid="0.701.1.0" FuncVariadic="false"/>
                       </dxl:Comparison>
                       <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
                         <dxl:Ident ColId="19" ColName="b" TypeMdid="0.23.1.0"/>

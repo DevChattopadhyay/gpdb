@@ -255,7 +255,7 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
     <dxl:Plan Id="0" SpaceSize="16">
       <dxl:GatherMotion InputSegments="0,1" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="8620.941763" Rows="1000.000000" Width="8"/>
+          <dxl:Cost StartupCost="0" TotalCost="8620.938473" Rows="1000.000000" Width="8"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="0" Alias="f1">
@@ -267,9 +267,9 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
         </dxl:ProjList>
         <dxl:Filter/>
         <dxl:SortingColumnList/>
-        <dxl:NestedLoopJoin JoinType="Inner" IndexNestedLoopJoin="false">
+        <dxl:NestedLoopJoin JoinType="Inner" IndexNestedLoopJoin="false" OuterRefAsParam="false">
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="8620.905843" Rows="1000.000000" Width="8"/>
+            <dxl:Cost StartupCost="0" TotalCost="8620.902553" Rows="1000.000000" Width="8"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="0" Alias="f1">
@@ -323,7 +323,7 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
           </dxl:BroadcastMotion>
           <dxl:Materialize Eager="false">
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="1293.028051" Rows="1000.000000" Width="8"/>
+              <dxl:Cost StartupCost="0" TotalCost="1293.027228" Rows="1000.000000" Width="8"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="25" Alias="ColRef_0025">
@@ -336,7 +336,7 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
             <dxl:Filter/>
             <dxl:Result>
               <dxl:Properties>
-                <dxl:Cost StartupCost="0" TotalCost="1293.024051" Rows="1000.000000" Width="8"/>
+                <dxl:Cost StartupCost="0" TotalCost="1293.023228" Rows="1000.000000" Width="8"/>
               </dxl:Properties>
               <dxl:ProjList>
                 <dxl:ProjElem ColId="25" Alias="ColRef_0025">
@@ -347,7 +347,7 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
                     </dxl:ParamList>
                     <dxl:Result>
                       <dxl:Properties>
-                        <dxl:Cost StartupCost="0" TotalCost="431.002254" Rows="2.000000" Width="4"/>
+                        <dxl:Cost StartupCost="0" TotalCost="431.001431" Rows="2.000000" Width="4"/>
                       </dxl:Properties>
                       <dxl:ProjList>
                         <dxl:ProjElem ColId="16" Alias="f1">
@@ -418,7 +418,7 @@ insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647)
               <dxl:OneTimeFilter/>
               <dxl:TableScan>
                 <dxl:Properties>
-                  <dxl:Cost StartupCost="0" TotalCost="1293.020051" Rows="1000.000000" Width="8"/>
+                  <dxl:Cost StartupCost="0" TotalCost="1293.019228" Rows="1000.000000" Width="8"/>
                 </dxl:Properties>
                 <dxl:ProjList>
                   <dxl:ProjElem ColId="8" Alias="f1">

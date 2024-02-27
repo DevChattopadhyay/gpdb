@@ -364,7 +364,7 @@ select (select h.i from t2) from h where h.j = 1;
     <dxl:Plan Id="0" SpaceSize="3">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="1324039.424497" Rows="1.000000" Width="4"/>
+          <dxl:Cost StartupCost="0" TotalCost="1293.007267" Rows="1.000000" Width="4"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="19" Alias="i">
@@ -375,7 +375,7 @@ select (select h.i from t2) from h where h.j = 1;
         <dxl:SortingColumnList/>
         <dxl:Result>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="1324039.424482" Rows="1.000000" Width="4"/>
+            <dxl:Cost StartupCost="0" TotalCost="1293.007252" Rows="1.000000" Width="4"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="19" Alias="i">
@@ -437,7 +437,7 @@ select (select h.i from t2) from h where h.j = 1;
           <dxl:OneTimeFilter/>
           <dxl:DynamicTableScan SelectorIds="">
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="1324039.424481" Rows="1000.000000" Width="8"/>
+              <dxl:Cost StartupCost="0" TotalCost="1293.007250" Rows="1000.000000" Width="8"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="0" Alias="j">

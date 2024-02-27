@@ -373,7 +373,7 @@
     <dxl:Plan Id="0" SpaceSize="80">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="883119.297846" Rows="1.000000" Width="32"/>
+          <dxl:Cost StartupCost="0" TotalCost="1293.001192" Rows="1.000000" Width="32"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="18" Alias="b">
@@ -393,11 +393,11 @@
         <dxl:SortingColumnList/>
         <dxl:Result>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="883119.297727" Rows="1.000000" Width="32"/>
+            <dxl:Cost StartupCost="0" TotalCost="1293.001073" Rows="1.000000" Width="32"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="18" Alias="b">
-              <dxl:FuncExpr FuncId="0.669.1.0" FuncRetSet="false" TypeMdid="0.1043.1.0" TypeModifier="104">
+              <dxl:FuncExpr FuncId="0.669.1.0" FuncRetSet="false" TypeMdid="0.1043.1.0" FuncVariadic="false" TypeModifier="104">
                 <dxl:Cast TypeMdid="0.1043.1.0" FuncId="0.0.0.0">
                   <dxl:Ident ColId="1" ColName="b" TypeMdid="0.25.1.0"/>
                 </dxl:Cast>
@@ -419,7 +419,7 @@
           <dxl:OneTimeFilter/>
           <dxl:HashJoin JoinType="Inner">
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="883119.297683" Rows="1.000000" Width="32"/>
+              <dxl:Cost StartupCost="0" TotalCost="1293.001029" Rows="1.000000" Width="32"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="0" Alias="a">
@@ -445,7 +445,7 @@
             </dxl:HashCondList>
             <dxl:TableScan>
               <dxl:Properties>
-                <dxl:Cost StartupCost="0" TotalCost="882688.296944" Rows="1.000000" Width="16"/>
+                <dxl:Cost StartupCost="0" TotalCost="862.000290" Rows="1.000000" Width="16"/>
               </dxl:Properties>
               <dxl:ProjList>
                 <dxl:ProjElem ColId="0" Alias="a">
@@ -505,7 +505,7 @@
                           </dxl:Properties>
                           <dxl:ProjList>
                             <dxl:ProjElem ColId="20" Alias="b">
-                              <dxl:FuncExpr FuncId="0.669.1.0" FuncRetSet="false" TypeMdid="0.1043.1.0" TypeModifier="104">
+                              <dxl:FuncExpr FuncId="0.669.1.0" FuncRetSet="false" TypeMdid="0.1043.1.0" FuncVariadic="false" TypeModifier="104">
                                 <dxl:Cast TypeMdid="0.1043.1.0" FuncId="0.0.0.0">
                                   <dxl:Ident ColId="1" ColName="b" TypeMdid="0.25.1.0"/>
                                 </dxl:Cast>

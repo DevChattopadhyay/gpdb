@@ -212,7 +212,7 @@ Result
     <dxl:Plan Id="0" SpaceSize="66">
       <dxl:Result>
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="441357.573926" Rows="1.000000" Width="1"/>
+          <dxl:Cost StartupCost="0" TotalCost="431.013257" Rows="1.000000" Width="1"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="4" Alias="x">

@@ -236,7 +236,7 @@ select (select b from bar) from foo;
     <dxl:Plan Id="0" SpaceSize="3">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="1324039.360677" Rows="1.000000" Width="4"/>
+          <dxl:Cost StartupCost="0" TotalCost="1293.007204" Rows="1.000000" Width="4"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="19" Alias="b">
@@ -247,7 +247,7 @@ select (select b from bar) from foo;
         <dxl:SortingColumnList/>
         <dxl:Result>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="1324039.360662" Rows="1.000000" Width="4"/>
+            <dxl:Cost StartupCost="0" TotalCost="1293.007189" Rows="1.000000" Width="4"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="19" Alias="b">
@@ -309,7 +309,7 @@ select (select b from bar) from foo;
           <dxl:OneTimeFilter/>
           <dxl:TableScan>
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="1324039.360661" Rows="1000.000000" Width="4"/>
+              <dxl:Cost StartupCost="0" TotalCost="1293.007188" Rows="1000.000000" Width="4"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="1" Alias="b">
