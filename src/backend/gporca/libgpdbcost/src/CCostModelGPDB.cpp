@@ -1343,6 +1343,12 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 	CColRefSet *pcrsUsed = pexprJoinCond->DeriveUsedColumns();
 	const ULONG ulColsUsed = pcrsUsed->Size();
 
+	COperator::EOperatorId op_id = exprhdl.Pop()->Eopid();
+	COperator *popFirstChild = exprhdl.Pop(0);
+	COperator *popSecondChild = exprhdl.Pop(1);
+
+
+
 	// cost of nested loop join contains three parts:
 	// 1. feeding outer tuples. This part is correlated with rows and width of outer tuples
 	// and the number of columns used.
@@ -1374,6 +1380,17 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 		CostChildren(mp, exprhdl, pci, pcmgpdb->GetCostModelParams());
 
 	CCost costTotal = CCost(costLocal + costChild);
+
+	if (COperator::EopPhysicalCorrelatedLeftOuterNLJoin == op_id &&
+		((popFirstChild != nullptr &&
+		  COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
+			  popFirstChild->Eopid()) ||
+		 (popSecondChild != nullptr &&
+		  COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
+			  popSecondChild->Eopid())))
+	{
+		return costTotal;
+	}
 
 	// amplify NLJ cost based on NLJ factor and stats estimation risk
 	// we don't want to penalize index join compared to nested loop join, so we make sure
