@@ -1992,7 +1992,7 @@
     <dxl:Plan Id="0" SpaceSize="1028">
       <dxl:Result>
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="69941.462832" Rows="896.720000" Width="238"/>
+          <dxl:Cost StartupCost="0" TotalCost="11668.511336" Rows="896.720000" Width="238"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="36" Alias="tableoid">
@@ -2155,7 +2155,7 @@
         <dxl:OneTimeFilter/>
         <dxl:Sort SortDiscardDuplicates="false">
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="69941.159741" Rows="1000.000000" Width="241"/>
+            <dxl:Cost StartupCost="0" TotalCost="11668.208245" Rows="1000.000000" Width="241"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="0" Alias="relname">
