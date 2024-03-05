@@ -1378,7 +1378,7 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 	COperator *popFirstChild = exprhdl.Pop(0);
 	COperator *popSecondChild = exprhdl.Pop(1);
 
-	if (COperator::EopPhysicalCorrelatedLeftOuterNLJoin == parentOpId &&
+	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin)  && COperator::EopPhysicalCorrelatedLeftOuterNLJoin == parentOpId &&
 		((popFirstChild == nullptr && popSecondChild == nullptr) ||
 		 (popFirstChild != nullptr &&
 		  COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
