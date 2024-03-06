@@ -3995,12 +3995,11 @@ CTranslatorExprToDXL::BuildDxlnSubPlan(CDXLNode *pdxlnRelChild,
 	// add to hashmap
 	BOOL fRes GPOS_ASSERTS_ONLY =
 		m_phmcrdxln->Insert(const_cast<CColRef *>(colref), pdxlnSubPlan);
-	if(fRes==false)
+	if (fRes == false)
 	{
 		pdxlnSubPlan->Release();
 		dxl_colref_array->Release();
 	}
-	// GPOS_ASSERT(fRes);
 }
 
 

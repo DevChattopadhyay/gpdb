@@ -2809,14 +2809,14 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
         {
-            {"optimizer_enable_penalize_correlated_nljoin", PGC_USERSET, QUERY_TUNING_METHOD,
-             gettext_noop("Penalize correlated NL join"),
-             NULL,
-             GUC_NOT_IN_SAMPLE
-            },
-            &optimizer_enable_penalize_correlated_nljoin,
-            false,
-            NULL, NULL, NULL
+		{"optimizer_enable_penalize_correlated_nljoin", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Penalize correlated NL join"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_penalize_correlated_nljoin,
+		false,
+		NULL, NULL, NULL
         },
 
 	{
