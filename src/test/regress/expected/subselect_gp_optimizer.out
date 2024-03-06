@@ -3843,17 +3843,15 @@ explain (costs off) select least((select 5), greatest(b, NULL, (select 1)), a) f
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Nested Loop Left Join
-         Join Filter: true
-         ->  Nested Loop Left Join
-               Join Filter: true
-               ->  Seq Scan on foo
-               ->  Materialize
-                     ->  Result
-         ->  Materialize
-               ->  Result
+   ->  Seq Scan on foo
+         SubPlan 1
+           ->  Result
+                 ->  Result
+         SubPlan 2
+           ->  Result
+                 ->  Result
  Optimizer: GPORCA
-(11 rows)
+(9 rows)
 
 select least((select 5), greatest(b, NULL, (select 1)), a) from foo;
  least 
@@ -3893,25 +3891,19 @@ select (select a from bar)[1] from bar;
 (1 row)
 
 explain (costs off) select (select a from bar)[(select 1)] from bar;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Nested Loop Left Join
-         Join Filter: true
-         ->  Nested Loop Left Join
-               Join Filter: true
-               ->  Seq Scan on bar bar_1
-               ->  Materialize
-                     ->  Result
-         ->  Assert
-               Assert Cond: ((row_number() OVER (?)) = 1)
-               ->  Materialize
-                     ->  Broadcast Motion 1:3  (slice2)
-                           ->  WindowAgg
-                                 ->  Gather Motion 3:1  (slice3; segments: 3)
-                                       ->  Seq Scan on bar
+   ->  Seq Scan on bar
+         SubPlan 2
+           ->  Materialize
+                 ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                       ->  Seq Scan on bar bar_1
+         SubPlan 1
+           ->  Result
+                 ->  Result
  Optimizer: GPORCA
-(16 rows)
+(10 rows)
 
 select (select a from bar)[(select 1)] from bar;
  a 
@@ -3943,25 +3935,19 @@ select (select b from bar)[1][1:3] from bar;
 (1 row)
 
 explain (costs off) select (select b from bar)[(select 1)][1:3] from bar;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Nested Loop Left Join
-         Join Filter: true
-         ->  Nested Loop Left Join
-               Join Filter: true
-               ->  Seq Scan on bar bar_1
-               ->  Materialize
-                     ->  Result
-         ->  Assert
-               Assert Cond: ((row_number() OVER (?)) = 1)
-               ->  Materialize
-                     ->  Broadcast Motion 1:3  (slice2)
-                           ->  WindowAgg
-                                 ->  Gather Motion 3:1  (slice3; segments: 3)
-                                       ->  Seq Scan on bar
+   ->  Seq Scan on bar
+         SubPlan 2
+           ->  Materialize
+                 ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                       ->  Seq Scan on bar bar_1
+         SubPlan 1
+           ->  Result
+                 ->  Result
  Optimizer: GPORCA
-(16 rows)
+(10 rows)
 
 select (select b from bar)[(select 1)][1:3] from bar;
      b     

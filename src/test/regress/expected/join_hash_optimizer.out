@@ -1109,58 +1109,58 @@ WHERE
     AND (SELECT hjtest_1.b * 5) < 50
     AND (SELECT hjtest_2.c * 5) < 55
     AND hjtest_1.a <> hjtest_2.b;
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Output: hjtest_1.a, hjtest_2.a, ((hjtest_1.tableoid)::regclass), ((hjtest_2.tableoid)::regclass)
    ->  Hash Join
          Output: hjtest_1.a, hjtest_2.a, hjtest_1.tableoid, hjtest_2.tableoid
-         Hash Cond: (((1) = hjtest_1.id) AND (((SubPlan 2)) = ((SubPlan 4))))
+         Hash Cond: ((((SubPlan 2)) = hjtest_1.id) AND (((SubPlan 3)) = ((SubPlan 5))))
          Join Filter: (hjtest_1.a <> hjtest_2.b)
          ->  Redistribute Motion 3:3  (slice2; segments: 3)
-               Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (1), ((SubPlan 2))
-               Hash Key: (1)
-               ->  Nested Loop Left Join
-                     Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (1), (SubPlan 2)
-                     Join Filter: (hjtest_2.id = 1)
-                     ->  Seq Scan on public.hjtest_2
-                           Output: hjtest_2.a, hjtest_2.id, hjtest_2.b, hjtest_2.c, hjtest_2.tableoid
-                           Filter: (SubPlan 1)
-                           SubPlan 1
-                             ->  Result
-                                   Output: true
-                                   Filter: (((hjtest_2.c * 5)) < 55)
-                                   ->  Result
-                                         Output: (hjtest_2.c * 5)
-                     ->  Materialize
-                           Output: (1)
-                           ->  Result
-                                 Output: 1
+               Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, ((SubPlan 2)), ((SubPlan 3))
+               Hash Key: ((SubPlan 2))
+               ->  Seq Scan on public.hjtest_2
+                     Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (SubPlan 2), (SubPlan 3)
+                     Filter: (SubPlan 1)
                      SubPlan 2
+                       ->  Result
+                             Output: 1
+                             ->  Result
+                                   One-Time Filter: (hjtest_2.id = 1)
+                                   ->  Result
+                                         Output: true
+                     SubPlan 3
                        ->  Result
                              Output: (hjtest_2.c * 5)
                              ->  Result
                                    Output: true
+                     SubPlan 1
+                       ->  Result
+                             Output: true
+                             Filter: (((hjtest_2.c * 5)) < 55)
+                             ->  Result
+                                   Output: (hjtest_2.c * 5)
          ->  Hash
-               Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 4))
+               Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 5))
                ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                     Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 4))
+                     Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 5))
                      Hash Key: hjtest_1.id
                      ->  Seq Scan on public.hjtest_1
-                           Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, (SubPlan 4)
-                           Filter: (SubPlan 3)
-                           SubPlan 4
+                           Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, (SubPlan 5)
+                           Filter: (SubPlan 4)
+                           SubPlan 5
                              ->  Result
                                    Output: (hjtest_1.b * 5)
                                    ->  Result
                                          Output: true
-                           SubPlan 3
+                           SubPlan 4
                              ->  Result
                                    Output: true
                                    Filter: (((hjtest_1.b * 5)) < 50)
                                    ->  Result
                                          Output: (hjtest_1.b * 5)
- Optimizer: Pivotal Optimizer (GPORCA)
+ Optimizer: GPORCA
  Settings: enable_sort = 'off', from_collapse_limit = '1'
 (51 rows)
 
@@ -1186,58 +1186,58 @@ WHERE
     AND (SELECT hjtest_1.b * 5) < 50
     AND (SELECT hjtest_2.c * 5) < 55
     AND hjtest_1.a <> hjtest_2.b;
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Output: hjtest_1.a, hjtest_2.a, ((hjtest_1.tableoid)::regclass), ((hjtest_2.tableoid)::regclass)
    ->  Hash Join
          Output: hjtest_1.a, hjtest_2.a, hjtest_1.tableoid, hjtest_2.tableoid
-         Hash Cond: (((1) = hjtest_1.id) AND (((SubPlan 2)) = ((SubPlan 4))))
+         Hash Cond: ((((SubPlan 2)) = hjtest_1.id) AND (((SubPlan 3)) = ((SubPlan 5))))
          Join Filter: (hjtest_1.a <> hjtest_2.b)
          ->  Redistribute Motion 3:3  (slice2; segments: 3)
-               Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (1), ((SubPlan 2))
-               Hash Key: (1), ((SubPlan 2))
-               ->  Nested Loop Left Join
-                     Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (1), (SubPlan 2)
-                     Join Filter: (hjtest_2.id = 1)
-                     ->  Seq Scan on public.hjtest_2
-                           Output: hjtest_2.a, hjtest_2.id, hjtest_2.b, hjtest_2.c, hjtest_2.tableoid
-                           Filter: (SubPlan 1)
-                           SubPlan 1
-                             ->  Result
-                                   Output: true
-                                   Filter: (((hjtest_2.c * 5)) < 55)
-                                   ->  Result
-                                         Output: (hjtest_2.c * 5)
-                     ->  Materialize
-                           Output: (1)
-                           ->  Result
-                                 Output: 1
+               Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, ((SubPlan 2)), ((SubPlan 3))
+               Hash Key: ((SubPlan 2)), ((SubPlan 3))
+               ->  Seq Scan on public.hjtest_2
+                     Output: hjtest_2.a, hjtest_2.b, hjtest_2.tableoid, (SubPlan 2), (SubPlan 3)
+                     Filter: (SubPlan 1)
                      SubPlan 2
+                       ->  Result
+                             Output: 1
+                             ->  Result
+                                   One-Time Filter: (hjtest_2.id = 1)
+                                   ->  Result
+                                         Output: true
+                     SubPlan 3
                        ->  Result
                              Output: (hjtest_2.c * 5)
                              ->  Result
                                    Output: true
+                     SubPlan 1
+                       ->  Result
+                             Output: true
+                             Filter: (((hjtest_2.c * 5)) < 55)
+                             ->  Result
+                                   Output: (hjtest_2.c * 5)
          ->  Hash
-               Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 4))
+               Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 5))
                ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                     Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 4))
-                     Hash Key: hjtest_1.id, ((SubPlan 4))
+                     Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, ((SubPlan 5))
+                     Hash Key: hjtest_1.id, ((SubPlan 5))
                      ->  Seq Scan on public.hjtest_1
-                           Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, (SubPlan 4)
-                           Filter: (SubPlan 3)
-                           SubPlan 4
+                           Output: hjtest_1.a, hjtest_1.id, hjtest_1.tableoid, (SubPlan 5)
+                           Filter: (SubPlan 4)
+                           SubPlan 5
                              ->  Result
                                    Output: (hjtest_1.b * 5)
                                    ->  Result
                                          Output: true
-                           SubPlan 3
+                           SubPlan 4
                              ->  Result
                                    Output: true
                                    Filter: (((hjtest_1.b * 5)) < 50)
                                    ->  Result
                                          Output: (hjtest_1.b * 5)
- Optimizer: Pivotal Optimizer (GPORCA)
+ Optimizer: GPORCA
  Settings: enable_sort = 'off', from_collapse_limit = '1'
 (51 rows)
 
