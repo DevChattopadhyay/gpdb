@@ -3983,6 +3983,14 @@ CTranslatorExprToDXL::BuildDxlnSubPlan(CDXLNode *pdxlnRelChild,
 									   CDXLColRefArray *dxl_colref_array)
 {
 	GPOS_ASSERT(nullptr != colref);
+
+	if (nullptr != m_phmcrdxln->Find(const_cast<CColRef *>(colref)))
+	{
+		pdxlnRelChild->Release();
+		dxl_colref_array->Release();
+		return;
+	}
+
 	IMDId *mdid = colref->RetrieveType()->MDId();
 	mdid->AddRef();
 
@@ -3995,11 +4003,8 @@ CTranslatorExprToDXL::BuildDxlnSubPlan(CDXLNode *pdxlnRelChild,
 	// add to hashmap
 	BOOL fRes GPOS_ASSERTS_ONLY =
 		m_phmcrdxln->Insert(const_cast<CColRef *>(colref), pdxlnSubPlan);
-	if (fRes == false)
-	{
-		pdxlnSubPlan->Release();
-		dxl_colref_array->Release();
-	}
+
+	GPOS_ASSERT(fRes);
 }
 
 
