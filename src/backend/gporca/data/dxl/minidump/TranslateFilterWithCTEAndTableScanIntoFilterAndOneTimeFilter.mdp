@@ -595,7 +595,7 @@
     <dxl:Plan Id="0" SpaceSize="616">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="1767988.635053" Rows="10.000001" Width="12"/>
+          <dxl:Cost StartupCost="0" TotalCost="1852062876647.470947" Rows="10.000001" Width="12"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="55" Alias="?column?">
@@ -612,7 +612,7 @@
         <dxl:SortingColumnList/>
         <dxl:Sequence>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="1767988.634606" Rows="10.000001" Width="12"/>
+            <dxl:Cost StartupCost="0" TotalCost="1852062876647.470459" Rows="10.000001" Width="12"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="55" Alias="?column?">
@@ -711,7 +711,7 @@
           </dxl:CTEProducer>
           <dxl:Result>
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="1767126.633024" Rows="10.000001" Width="12"/>
+              <dxl:Cost StartupCost="0" TotalCost="1852062875785.468994" Rows="10.000001" Width="12"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="55" Alias="?column?">
@@ -824,7 +824,7 @@
                             <dxl:Cast TypeMdid="0.701.1.0" FuncId="0.316.1.0">
                               <dxl:Ident ColId="18" ColName="a" TypeMdid="0.23.1.0"/>
                             </dxl:Cast>
-                            <dxl:FuncExpr FuncId="0.1598.1.0" FuncRetSet="false" TypeMdid="0.701.1.0" FuncVariadic="false"/>
+                            <dxl:FuncExpr FuncId="0.1598.1.0" FuncRetSet="false" TypeMdid="0.701.1.0"/>
                           </dxl:Comparison>
                         </dxl:Filter>
                         <dxl:OneTimeFilter>
