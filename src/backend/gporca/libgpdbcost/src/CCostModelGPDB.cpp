@@ -1374,6 +1374,20 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 
 	CCost costTotal = CCost(costLocal + costChild);
 
+	COperator *popFirstChild = exprhdl.Pop(0);
+	COperator *popSecondChild = exprhdl.Pop(1);
+
+	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
+		CUtils::FCorrelatedNLJoin(exprhdl.Pop()) &&
+		((popFirstChild == nullptr && popSecondChild == nullptr) ||
+		 (popFirstChild != nullptr &&
+		  CUtils::FCorrelatedNLJoin(popFirstChild) &&
+		  popSecondChild != nullptr &&
+		  !CUtils::FCorrelatedNLJoin(popSecondChild))))
+	{
+		return costTotal;
+	}
+
 	// amplify NLJ cost based on NLJ factor and stats estimation risk
 	// we don't want to penalize index join compared to nested loop join, so we make sure
 	// that every time index join is penalized, we penalize nested loop join by at least the
