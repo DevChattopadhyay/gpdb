@@ -32,7 +32,7 @@ private:
 									 const CColRefSet *pcrsOutput);
 
 	static CExpression *JoinPruningTreeTraversal(
-		CMemoryPool *mp, const CExpression *pexpr, CExpressionArray *pdrgpexpr,
+		CMemoryPool *mp, const CExpression *pexpr,
 		const CColRefSet *childs_output_columns);
 
 	static CExpression *PexprCheckLeftOuterJoinPruningConditions(

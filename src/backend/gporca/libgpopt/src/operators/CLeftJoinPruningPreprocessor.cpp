@@ -368,7 +368,6 @@ CLeftJoinPruningPreprocessor::PexprJoinPruningScalarSubquery(
 		return pexprScalar;
 	}
 
-	CExpressionArray *pdrgpexpr = GPOS_NEW(mp) CExpressionArray(mp);
 	CColRefSet *subquery_colrefset = GPOS_NEW(mp) CColRefSet(mp);
 	const CColRef *subquery_colref = nullptr;
 	if (COperator::EopScalarSubquery == pexprScalar->Pop()->Eopid())
@@ -390,8 +389,7 @@ CLeftJoinPruningPreprocessor::PexprJoinPruningScalarSubquery(
 		subquery_colrefset->Include(subquery_colref);
 	}
 
-	pexprScalar = JoinPruningTreeTraversal(mp, pexprScalar, pdrgpexpr,
-										   subquery_colrefset);
+	pexprScalar = JoinPruningTreeTraversal(mp, pexprScalar, subquery_colrefset);
 	subquery_colrefset->Release();
 	return pexprScalar;
 }
@@ -482,11 +480,13 @@ CLeftJoinPruningPreprocessor::ComputeOutputColumns(
 
 CExpression *
 CLeftJoinPruningPreprocessor::JoinPruningTreeTraversal(
-	CMemoryPool *mp, const CExpression *pexpr, CExpressionArray *pdrgpexpr,
+	CMemoryPool *mp, const CExpression *pexpr,
 	const CColRefSet *combined_output_pred_columns)
 {
 	GPOS_ASSERT(nullptr != pexpr);
-	GPOS_ASSERT(nullptr != pdrgpexpr);
+
+	// Array to hold the child expressions
+	CExpressionArray *pdrgpexpr = GPOS_NEW(mp) CExpressionArray(mp);
 
 	ULONG number_of_childs = pexpr->Arity();
 	for (ULONG ul = 0; ul < number_of_childs; ul++)
@@ -599,12 +599,9 @@ CLeftJoinPruningPreprocessor::PexprPreprocess(CMemoryPool *mp,
 	ComputeOutputColumns(pexpr, derived_output_columns, output_columns,
 						 combined_output_pred_columns, pcrsOutput);
 
-	// Array to hold the child expressions
-	CExpressionArray *pdrgpexpr = GPOS_NEW(mp) CExpressionArray(mp);
-
 	// Traversing the tree
-	CExpression *pexprNew = JoinPruningTreeTraversal(
-		mp, pexpr, pdrgpexpr, combined_output_pred_columns);
+	CExpression *pexprNew =
+		JoinPruningTreeTraversal(mp, pexpr, combined_output_pred_columns);
 	combined_output_pred_columns->Release();
 
 	// Checking if the join is a left join then pruning the join if possible
