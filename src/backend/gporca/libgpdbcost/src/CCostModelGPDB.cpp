@@ -1374,84 +1374,16 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 
 	CCost costTotal = CCost(costLocal + costChild);
 
-	COperator::EOperatorId parentOpId = exprhdl.Pop()->Eopid();
 	COperator *popFirstChild = exprhdl.Pop(0);
 	COperator *popSecondChild = exprhdl.Pop(1);
 
 	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedInnerNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedInnerNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedInnerNLJoin !=
-			  popSecondChild->Eopid())))
-	{
-		return costTotal;
-	}
-
-	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedLeftOuterNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftOuterNLJoin !=
-			  popSecondChild->Eopid())))
-	{
-		return costTotal;
-	}
-
-	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedLeftSemiNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftSemiNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftSemiNLJoin !=
-			  popSecondChild->Eopid())))
-	{
-		return costTotal;
-	}
-
-	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedInLeftSemiNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedInLeftSemiNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedInLeftSemiNLJoin !=
-			  popSecondChild->Eopid())))
-	{
-		return costTotal;
-	}
-
-	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin !=
-			  popSecondChild->Eopid())))
-	{
-		return costTotal;
-	}
-
-	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedNLjoin) &&
-		COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin == parentOpId &&
-		((popFirstChild == nullptr && popSecondChild == nullptr) ||
-		 (popFirstChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin ==
-			  popFirstChild->Eopid() &&
-		  popSecondChild != nullptr &&
-		  COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin !=
-			  popSecondChild->Eopid())))
+		CUtils::FCorrelatedNLJoin(exprhdl.Pop()) &&
+		((nullptr == popFirstChild && nullptr == popSecondChild) ||
+		 (nullptr != popFirstChild &&
+		  CUtils::FCorrelatedNLJoin(popFirstChild) &&
+		  nullptr != popSecondChild &&
+		  !CUtils::FCorrelatedNLJoin(popSecondChild))))
 	{
 		return costTotal;
 	}
