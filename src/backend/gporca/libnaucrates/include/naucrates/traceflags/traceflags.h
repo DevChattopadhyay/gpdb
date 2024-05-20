@@ -256,6 +256,9 @@ enum EOptTraceFlag
 
 	// Use experimental cost model
 	EopttraceExperimentalCostModel = 104009,
+
+	// Penalize correlated NLJ
+	EopttraceEnablePenalizeCorrelatedNLjoin = 104010,
 	///////////////////////////////////////////////////////
 	/////////// constant expression evaluator flags ///////
 	///////////////////////////////////////////////////////
