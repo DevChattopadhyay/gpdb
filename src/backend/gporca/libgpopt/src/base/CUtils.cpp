@@ -1184,11 +1184,11 @@ CUtils::FPhysicalLeftOuterCorrelatedJoin(COperator *pop)
 {
 	GPOS_ASSERT(nullptr != pop);
 
-	return COperator::EopPhysicalCorrelatedLeftOuterNLJoin == pop->Eopid() ||
-		   COperator::EopPhysicalCorrelatedLeftSemiNLJoin == pop->Eopid() ||
-		   COperator::EopPhysicalCorrelatedInLeftSemiNLJoin == pop->Eopid() ||
-		   COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin == pop->Eopid() ||
-		   COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin == pop->Eopid();
+	return COperator::EopPhysicalCorrelatedLeftOuterNLJoin == pop->Eopid() ;
+//		   COperator::EopPhysicalCorrelatedLeftSemiNLJoin == pop->Eopid() ||
+//		   COperator::EopPhysicalCorrelatedInLeftSemiNLJoin == pop->Eopid() ||
+//		   COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin == pop->Eopid() ||
+//		   COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin == pop->Eopid()
 }
 
 // check if a given operator is a physical agg

@@ -662,36 +662,7 @@ CCostContext::CostCompute(CMemoryPool *mp, CCostArray *pdrgpcostChildren)
 	ci.SetWidth(width);
 
 	DOUBLE num_rebinds = m_pstats->NumRebinds().Get();
-	if ((CUtils::FNLJoin(exprhdl.Pop())))
-	{
-		COptimizationContext *pocChild = (*m_pdrgpoc)[0];
-		CCostContext *pccChild = pocChild->PccBest();
-		GPOS_ASSERT(nullptr != pccChild);
-
-		IStatistics *child_stats = pccChild->Pstats();
-
-		DOUBLE dRowsChild = child_stats->Rows().Get();
-		if (CDistributionSpec::EdptPartitioned ==
-			pccChild->Pdpplan()->Pds()->Edpt())
-		{
-			// scale statistics row estimate by number of segments
-			dRowsChild = pccChild->DRowsPerHost().Get();
-		}
-
-		if (dRowsChild > 1)
-		{
-			ci.SetRebinds(dRowsChild);
-		}
-		
-		else
-		{
-			ci.SetRebinds(num_rebinds);
-		}
-	}
-	else
-	{
-		ci.SetRebinds(num_rebinds);
-	}
+	ci.SetRebinds(num_rebinds);
 
 	GPOS_ASSERT_IMP(
 		!exprhdl.HasOuterRefs(),
