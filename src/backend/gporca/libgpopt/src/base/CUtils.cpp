@@ -41,6 +41,7 @@
 #include "gpopt/operators/CLogicalProject.h"
 #include "gpopt/operators/CLogicalSelect.h"
 #include "gpopt/operators/CLogicalSequenceProject.h"
+#include "gpopt/operators/CPhysicalCorrelatedLeftOuterNLJoin.h"
 #include "gpopt/operators/CLogicalSetOp.h"
 #include "gpopt/operators/CLogicalUnary.h"
 #include "gpopt/operators/CPhysicalAgg.h"
@@ -1153,6 +1154,22 @@ CUtils::FNLJoin(COperator *pop)
 	return (nullptr != popNLJ);
 }
 
+BOOL
+CUtils::FSubplanTypeScalarCorrelatedLOJ(COperator *pop)
+{
+	GPOS_ASSERT(COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
+				pop->Eopid());
+
+	COperator::EOperatorId eopidSubq =
+		CPhysicalCorrelatedLeftOuterNLJoin::PopConvert(pop)->EopidOriginSubq();
+	if (COperator::EopScalarSubquery == eopidSubq)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 // check if a given operator is a logical join
 BOOL
 CUtils::FPhysicalJoin(COperator *pop)
@@ -1179,17 +1196,6 @@ CUtils::FPhysicalScan(COperator *pop)
 	return (nullptr != popScan);
 }
 
-BOOL
-CUtils::FPhysicalLeftOuterCorrelatedJoin(COperator *pop)
-{
-	GPOS_ASSERT(nullptr != pop);
-
-	return COperator::EopPhysicalCorrelatedLeftOuterNLJoin == pop->Eopid() ;
-//		   COperator::EopPhysicalCorrelatedLeftSemiNLJoin == pop->Eopid() ||
-//		   COperator::EopPhysicalCorrelatedInLeftSemiNLJoin == pop->Eopid() ||
-//		   COperator::EopPhysicalCorrelatedLeftAntiSemiNLJoin == pop->Eopid() ||
-//		   COperator::EopPhysicalCorrelatedNotInLeftAntiSemiNLJoin == pop->Eopid()
-}
 
 // check if a given operator is a physical agg
 BOOL

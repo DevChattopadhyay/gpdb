@@ -1419,13 +1419,22 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 
 	COperator *popFirstChild = exprhdl.Pop(0);
 	COperator *popSecondChild = exprhdl.Pop(1);
+	CExpression *scalarChild = exprhdl.PexprScalarExactChild(2);
 
-	if (CUtils::FPhysicalLeftOuterCorrelatedJoin(exprhdl.Pop()) &&
+	if (COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
+			exprhdl.Pop()->Eopid() &&
 		((nullptr == popFirstChild && nullptr == popSecondChild) ||
 		 (nullptr != popFirstChild &&
 		  CUtils::FCorrelatedNLJoin(popFirstChild) &&
+		  !CUtils::FSubplanTypeScalarCorrelatedLOJ(exprhdl.Pop()) &&
 		  nullptr != popSecondChild &&
-		  !CUtils::FCorrelatedNLJoin(popSecondChild))))
+		  !CUtils::FCorrelatedNLJoin(popSecondChild)) ||
+		 (nullptr != popFirstChild &&
+		  CUtils::FCorrelatedNLJoin(popFirstChild) &&
+		  CUtils::FSubplanTypeScalarCorrelatedLOJ(exprhdl.Pop()) &&
+		  nullptr != popSecondChild &&
+		  !CUtils::FCorrelatedNLJoin(popSecondChild) &&
+		  nullptr != scalarChild && CUtils::FScalarConstTrue(scalarChild))))
 	{
 		return costTotal;
 	}
