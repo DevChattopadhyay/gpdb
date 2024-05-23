@@ -46,6 +46,7 @@
 #include "gpopt/operators/CPhysicalAgg.h"
 #include "gpopt/operators/CPhysicalCTEConsumer.h"
 #include "gpopt/operators/CPhysicalCTEProducer.h"
+#include "gpopt/operators/CPhysicalCorrelatedLeftOuterNLJoin.h"
 #include "gpopt/operators/CPhysicalMotionRandom.h"
 #include "gpopt/operators/CPhysicalNLJoin.h"
 #include "gpopt/operators/CPredicateUtils.h"
@@ -1136,6 +1137,23 @@ CUtils::FCorrelatedNLJoin(COperator *pop)
 	}
 
 	return fCorrelatedNLJ;
+}
+
+// check if the correlated left outer NLJ is of scalar subplan type
+BOOL
+CUtils::FSubplanTypeScalarCorrelatedLOJ(COperator *pop)
+{
+	GPOS_ASSERT(COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
+				pop->Eopid());
+
+	COperator::EOperatorId eopidSubq =
+		CPhysicalCorrelatedLeftOuterNLJoin::PopConvert(pop)->EopidOriginSubq();
+	if (COperator::EopScalarSubquery == eopidSubq)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 // check if a given operator is a nested loops join

@@ -304,6 +304,10 @@ CConfigParamMapping::SConfigMappingElem CConfigParamMapping::m_elements[] = {
 	{EopttraceDisableInnerNLJ, &optimizer_enable_nljoin,
 	 true,	// m_negate_param
 	 GPOS_WSZ_LIT("Enable nested loop join alternatives")},
+	{EopttraceEnablePenalizeCorrelatedLeftOuterNLJ,
+	 &optimizer_enable_penalize_correlated_left_outer_nljoin,
+	 false,	 // m_negate_param
+	 GPOS_WSZ_LIT("Penalize correlated left outer nested loop join")},
 
 };
 

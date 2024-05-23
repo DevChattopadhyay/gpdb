@@ -586,6 +586,9 @@ public:
 	// check if a given operator is a correlated nested loops join
 	static BOOL FCorrelatedNLJoin(COperator *pop);
 
+	// check if the correlated left outer NLJ is of scalar subplan type
+	static BOOL FSubplanTypeScalarCorrelatedLOJ(COperator *pop);
+
 	// check if a given operator is a nested loops join
 	static BOOL FNLJoin(COperator *pop);
 
