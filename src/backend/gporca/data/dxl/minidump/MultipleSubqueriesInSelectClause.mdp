@@ -1171,10 +1171,10 @@
         </dxl:LogicalGet>
       </dxl:LogicalProject>
     </dxl:Query>
-    <dxl:Plan Id="0" SpaceSize="163431">
+    <dxl:Plan Id="0" SpaceSize="165991">
       <dxl:Result>
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="9309.074116" Rows="3000000.000000" Width="32"/>
+          <dxl:Cost StartupCost="0" TotalCost="2399.345982" Rows="3000000.000000" Width="32"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="0" Alias="field1">
@@ -1215,7 +1215,7 @@
         <dxl:OneTimeFilter/>
         <dxl:GatherMotion InputSegments="0,1" OutputSegments="-1">
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="9213.074116" Rows="1000.000000" Width="23"/>
+            <dxl:Cost StartupCost="0" TotalCost="2303.345982" Rows="1000.000000" Width="23"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="0" Alias="field1">
@@ -1244,7 +1244,7 @@
           <dxl:SortingColumnList/>
           <dxl:Result>
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="9212.970846" Rows="1000.000000" Width="23"/>
+              <dxl:Cost StartupCost="0" TotalCost="2303.242712" Rows="1000.000000" Width="23"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="0" Alias="field1">
@@ -1288,7 +1288,7 @@
                           <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
                         </dxl:ProjElem>
                         <dxl:ProjElem ColId="8" Alias="a">
-                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0"/>
+                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0" FuncVariadic="false"/>
                         </dxl:ProjElem>
                       </dxl:ProjList>
                       <dxl:Filter/>
@@ -1338,7 +1338,7 @@
                           <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
                         </dxl:ProjElem>
                         <dxl:ProjElem ColId="11" Alias="b">
-                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0"/>
+                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0" FuncVariadic="false"/>
                         </dxl:ProjElem>
                       </dxl:ProjList>
                       <dxl:Filter/>
@@ -1388,7 +1388,7 @@
                           <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
                         </dxl:ProjElem>
                         <dxl:ProjElem ColId="14" Alias="c">
-                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0"/>
+                          <dxl:FuncExpr FuncId="0.9255091.1.0" FuncRetSet="true" TypeMdid="0.23.1.0" FuncVariadic="false"/>
                         </dxl:ProjElem>
                       </dxl:ProjList>
                       <dxl:Filter/>
