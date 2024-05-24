@@ -15046,3 +15046,71 @@ explain (analyze, costs off, summary off, timing off) with cte as (select * from
  Optimizer: GPORCA
 (8 rows)
 
+-- By default the GUC optimizer_enable_penalize_correlated_left_outer_nljoin is
+-- set to OFF.
+-- If the GUC is set to OFF then nested correlated left outer NLJ will not be
+-- penalized.
+-- If the GUC is set to ON then nested correlated left outer NLJ will be
+-- penalized similar to nested loop join.
+-- If the GUC is OFF we will get a plan with subplans since the correlated left
+-- outer NLJ is not penalized like nested loop join.
+-- If the GUC is turned ON then we will get a plan with nested loop join.
+create table foo (a int, b text, c int) distributed by (a);
+create table bar (a int, b int, c int) distributed by (a);
+create table baz (a int, b text, c int) distributed by (a);
+insert into foo VALUES (100, 'false', 1);
+insert into foo VALUES (200, 'true', 2);
+insert into bar VALUES (2,2,2);
+insert into baz VALUES (200, 'falseg', 1);
+analyze foo,bar,baz;
+explain select * from foo where b::bool = ( exists(select c from bar) and not exists (select c from baz));
+                                                QUERY PLAN
+-----------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1324917.68 rows=2 width=13)
+   ->  Result  (cost=0.00..1324917.68 rows=1 width=13)
+         Filter: ((foo.b)::boolean = ((SubPlan 1) AND (SubPlan 2)))
+         ->  Seq Scan on foo  (cost=0.00..1324055.62 rows=334 width=17)
+         SubPlan 1
+           ->  Result  (cost=0.00..431.00 rows=1 width=5)
+                 ->  Materialize  (cost=0.00..431.00 rows=1 width=4)
+                       ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=4)
+                             ->  Seq Scan on bar  (cost=0.00..431.00 rows=1 width=4)
+         SubPlan 2
+           ->  Result  (cost=0.00..431.00 rows=1 width=5)
+                 ->  Materialize  (cost=0.00..431.00 rows=1 width=4)
+                       ->  Broadcast Motion 3:3  (slice3; segments: 3)  (cost=0.00..431.00 rows=1 width=4)
+                             ->  Seq Scan on baz  (cost=0.00..431.00 rows=1 width=4)
+ Optimizer: GPORCA
+(15 rows)
+
+set optimizer_enable_penalize_correlated_left_outer_nljoin to on;
+explain select * from foo where b::bool = ( exists(select c from bar) and not exists (select c from baz));
+                                                                                 QUERY PLAN
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1356691750.44 rows=2 width=13)
+   ->  GroupAggregate  (cost=0.00..1356691750.44 rows=1 width=13)
+         Group Key: foo.a, foo.b, foo.c, foo.ctid, foo.gp_segment_id, (true), (true)
+         ->  Sort  (cost=0.00..1356691750.44 rows=1 width=25)
+               Sort Key: foo.a, foo.b, foo.c, foo.ctid, foo.gp_segment_id, (true), (true)
+               ->  Result  (cost=0.00..1356691750.44 rows=1 width=25)
+                     Filter: ((foo.b)::boolean = (CASE WHEN (NOT ((true) IS NULL)) THEN true ELSE false END AND CASE WHEN (NOT ((true) IS NULL)) THEN false ELSE true END))
+                     ->  Nested Loop Left Join  (cost=0.00..1356691750.44 rows=2 width=25)
+                           Join Filter: true
+                           ->  GroupAggregate  (cost=0.00..1324032.29 rows=1 width=24)
+                                 Group Key: foo.a, foo.b, foo.c, foo.ctid, foo.gp_segment_id, (true)
+                                 ->  Sort  (cost=0.00..1324032.29 rows=2 width=24)
+                                       Sort Key: foo.a, foo.b, foo.c, foo.ctid, foo.gp_segment_id, (true)
+                                       ->  Nested Loop Left Join  (cost=0.00..1324032.29 rows=2 width=24)
+                                             Join Filter: true
+                                             ->  Seq Scan on foo  (cost=0.00..431.00 rows=1 width=23)
+                                             ->  Materialize  (cost=0.00..431.00 rows=1 width=1)
+                                                   ->  Broadcast Motion 3:3  (slice3; segments: 3)  (cost=0.00..431.00 rows=1 width=1)
+                                                         ->  Seq Scan on bar  (cost=0.00..431.00 rows=1 width=1)
+                           ->  Materialize  (cost=0.00..431.00 rows=1 width=1)
+                                 ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=1)
+                                       ->  Seq Scan on baz  (cost=0.00..431.00 rows=1 width=1)
+ Optimizer: GPORCA
+(23 rows)
+
+reset optimizer_enable_penalize_correlated_left_outer_nljoin;
+drop table foo,bar,baz;

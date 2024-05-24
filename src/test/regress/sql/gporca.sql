@@ -3713,6 +3713,29 @@ create table cte_test(a int);
 insert into cte_test select i from generate_series(1,10)i;
 analyze cte_test;
 explain (analyze, costs off, summary off, timing off) with cte as (select * from cte_test) select * from cte union all select * from cte;
+
+-- By default the GUC optimizer_enable_penalize_correlated_left_outer_nljoin is
+-- set to OFF.
+-- If the GUC is set to OFF then nested correlated left outer NLJ will not be
+-- penalized.
+-- If the GUC is set to ON then nested correlated left outer NLJ will be
+-- penalized similar to nested loop join.
+-- If the GUC is OFF we will get a plan with subplans since the correlated left
+-- outer NLJ is not penalized like nested loop join.
+-- If the GUC is turned ON then we will get a plan with nested loop join.
+create table foo (a int, b text, c int) distributed by (a);
+create table bar (a int, b int, c int) distributed by (a);
+create table baz (a int, b text, c int) distributed by (a);
+insert into foo VALUES (100, 'false', 1);
+insert into foo VALUES (200, 'true', 2);
+insert into bar VALUES (2,2,2);
+insert into baz VALUES (200, 'falseg', 1);
+analyze foo,bar,baz;
+explain select * from foo where b::bool = ( exists(select c from bar) and not exists (select c from baz));
+set optimizer_enable_penalize_correlated_left_outer_nljoin to on;
+explain select * from foo where b::bool = ( exists(select c from bar) and not exists (select c from baz));
+reset optimizer_enable_penalize_correlated_left_outer_nljoin;
+drop table foo,bar,baz;
 -- start_ignore
 DROP SCHEMA orca CASCADE;
 -- end_ignore
