@@ -1421,6 +1421,40 @@ CCostModelGPDB::CostNLJoin(CMemoryPool *mp, CExpressionHandle &exprhdl,
 	COperator *popSecondChild = exprhdl.Pop(1);
 	CExpression *scalarChild = exprhdl.PexprScalarExactChild(2);
 
+	// Consider the below plan tree
+	//
+	// X
+	// |——— Y
+	// |    |---- Outer1
+	// |    |---- Inner1
+	// |    |---- Join Condition1
+	// |
+	// |-------Inner2
+	// |
+	// |------- Join Condition2
+	//
+	// where
+	//
+	// Y: CPhysicalCorrelatedInnerNLJoin, CPhysicalCorrelatedLeftSemiNLJoin,
+	// CPhysicalCorrelatedInLeftSemiNLJoin, CPhysicalCorrelatedLeftAntiSemiNLJoin,
+	// CPhysicalCorrelatedNotInLeftAntiSemiNLJoin, CPhysicalCorrelatedLeftOuterNLJoin
+	//
+	// If X is a correlated NLJ operator apart from CPhysicalCorrelatedLeftOuterNLJoin
+	// then in the explain plan an extra result node is added and the subplan
+	// containing inner2 will be the filter for that result node. Due to this the
+	// subplans will be at different levels i.e the subplan created from inner1
+	// will execute first and based on the output subplan 2 created from inner2
+	// will be executed as a filter for those output rows. The behaviour is
+	// similar to a nested loop join within a nested loop join. So we should
+	// penalize these operators like nested loop join operator.
+	// But when X is CPhysicalCorrelatedLeftOuterNLJoin no extra result node is
+	// added (subplans at same level) if any of the below conditions are true
+	// - If the subplan type of CPhysicalCorrelatedLeftOuterNLJoin is non scalar.
+	// - If the subplan type of CPhysicalCorrelatedLeftOuterNLJoin is scalar then the
+	//   join condition (Join Condition2) should be a scalarConstTrue
+	//
+	// So CPhysicalCorrelatedLeftOuterNLJoin should not be penalized if the above
+	// conditions are met since the subplans will be at the same level.
 	if (!GPOS_FTRACE(EopttraceEnablePenalizeCorrelatedLeftOuterNLJ) &&
 		COperator::EopPhysicalCorrelatedLeftOuterNLJoin ==
 			exprhdl.Pop()->Eopid() &&
