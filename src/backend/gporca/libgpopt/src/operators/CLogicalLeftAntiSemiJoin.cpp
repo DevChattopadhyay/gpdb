@@ -94,6 +94,7 @@ CLogicalLeftAntiSemiJoin::DeriveOutputColumns(CMemoryPool *,  // mp
 	GPOS_ASSERT(3 == exprhdl.Arity());
 
 	return PcrsDeriveOutputPassThru(exprhdl);
+//	return PcrsDeriveOutputCombineLogical(mp,exprhdl);
 }
 
 

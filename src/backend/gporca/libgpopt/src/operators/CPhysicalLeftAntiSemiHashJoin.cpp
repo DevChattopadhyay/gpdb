@@ -59,11 +59,13 @@ CPhysicalLeftAntiSemiHashJoin::~CPhysicalLeftAntiSemiHashJoin() = default;
 BOOL
 CPhysicalLeftAntiSemiHashJoin::FProvidesReqdCols(CExpressionHandle &exprhdl,
 												 CColRefSet *pcrsRequired,
-												 ULONG	// ulOptReq
+												 ULONG ul	// ulOptReq
 ) const
 {
 	// left anti semi join only propagates columns from left child
-	return FOuterProvidesReqdCols(exprhdl, pcrsRequired);
+//	return FOuterProvidesReqdCols(exprhdl, pcrsRequired);
+
+	return CPhysicalJoin::FProvidesReqdCols(exprhdl, pcrsRequired,ul);
 }
 
 // EOF

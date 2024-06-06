@@ -166,6 +166,7 @@
 #include "gpopt/xforms/CXformUnnestTVF.h"
 #include "gpopt/xforms/CXformUpdate2DML.h"
 #include "gpopt/xforms/CXformUtils.h"
+#include "gpopt/xforms/CXformLeftOuterUnderSelectToLeftAntiSemiJoin.h"
 
 #endif	// !GPOPT_xforms_H
 
